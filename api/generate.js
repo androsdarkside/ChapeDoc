@@ -10,14 +10,14 @@ export default async function handler(req, res) {
         let templateInstructions = "";
         
         if (style === 'corporate') {
-            templateInstructions = "Génère un document d'entreprise formel. Commence OBLIGATOIREMENT par une page de garde HTML structurée de cette manière : un titre principal en h1, un sous-titre en p, puis les métadonnées (Auteur: Wilfried KOFFI, Date: Septembre 2026) encadrées proprement, suivies d'un saut de page ou d'une ligne de séparation, puis les sections du rapport (1. Introduction, 2. Développement, 3. Conclusion).";
+            templateInstructions = "Rédige un rapport d'entreprise de niveau professionnel supérieur. Commence par une page de garde élégante (Titre percutant en h1, sous-titre, et blocs d'informations pour l'auteur et la date). Ensuite, structure le corps du texte avec des titres de niveau 2 (h2) pour chaque grande partie, des paragraphes argumentés et des listes à puces claires.";
         } else if (style === 'academic') {
-            templateInstructions = "Génère un document académique rigoureux. Commence OBLIGATOIREMENT par une page de garde académique structurée (Titre du mémoire/projet, Nom de l'auteur: Wilfried KOFFI, Institution, Date), puis structure le contenu avec des sections académiques détaillées.";
+            templateInstructions = "Rédige un document académique de type mémoire ou rapport de recherche. Intègre une page de garde formelle, une introduction structurée, des sections numérotées avec des balises h2, et une conclusion rigoureuse.";
         } else {
-            templateInstructions = "Génère une lettre ou un document moderne et percutant avec un en-tête soigné, un objet clair et des paragraphes bien aérés.";
+            templateInstructions = "Rédige un document moderne, épuré et percutant, avec un en-tête stylisé et une mise en page très aérée.";
         }
 
-        const finalPrompt = `You are an expert document drafter. ${templateInstructions} You must ALWAYS output your response in clean, raw HTML format using proper tags (h1, h2, p, strong, em, ul, li). Never use markdown formatting or code blocks.\n\nDocument topic: ${prompt}`;
+        const finalPrompt = `You are an expert document designer and professional drafter. ${templateInstructions} You must ALWAYS output your response in clean, raw HTML format using proper tags (h1, h2, p, strong, em, ul, li). Never use markdown formatting or code blocks.\n\nDocument topic: ${prompt}`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
