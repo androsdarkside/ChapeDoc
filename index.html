@@ -1,61 +1,87 @@
-<style>
-        /* Style visuel "Feuille A4 Haute Qualité" */
-        .page-container {
-            background: #e5e7eb;
-            padding: 2.5rem 1rem;
-            display: flex;
-            justify-content: center;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChapeDoc - Smart Document Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Quill.js CSS & JS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-to-word@1.3.0/dist/index.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <header class="bg-indigo-600 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center space-x-3">
+            <i class="fa-solid fa-file-lines text-2xl"></i>
+            <h1 class="text-2xl font-bold tracking-wide">ChapeDoc</h1>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-8 w-full flex flex-col space-y-6 flex-grow">
+        <div class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
+            <h2 class="text-lg font-bold text-gray-900">What should we write?</h2>
+            <div class="flex space-x-3">
+                <input type="text" id="aiPrompt" placeholder="Ex: Rédige un rapport de stage..." class="flex-grow px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button onclick="generateWithAI()" id="generateBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">Generate</button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border flex flex-col flex-grow">
+            <div id="editor-container" class="h-96 text-base">
+                <p>Votre document apparaîtra ici...</p>
+            </div>
+            <div class="p-4 border-t bg-gray-50 flex justify-between rounded-b-xl">
+                <button onclick="quill.setContents([])" class="text-red-500 text-sm font-medium">Effacer</button>
+                <button onclick="downloadWord()" class="bg-gray-900 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-black">Télécharger .docx</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const quill = new Quill('#editor-container', {
+            theme: 'snow'
+        });
+
+        async function generateWithAI() {
+            const prompt = document.getElementById('aiPrompt').value.trim();
+            const btn = document.getElementById('generateBtn');
+            if (!prompt) return alert("Entrez un sujet !");
+
+            btn.innerText = "Réflexion...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, style: 'corporate' })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                quill.clipboard.dangerouslyPasteHTML(data.text);
+            } catch (err) {
+                alert("Erreur : " + err.message);
+            } finally {
+                btn.innerText = "Generate";
+                btn.disabled = false;
+            }
         }
-        .paper-sheet {
-            background: white;
-            width: 100%;
-            max-width: 850px;
-            min-height: 1050px;
-            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15);
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            padding: 3rem;
-            border-top: 6px solid #4f46e5; /* Barre de style haut de gamme */
+
+        async function downloadWord() {
+            try {
+                const delta = quill.getContents();
+                const blob = await quillToWord.generateWord(delta, { exportAs: 'blob' });
+                saveAs(blob, "ChapeDoc.docx");
+            } catch (err) {
+                alert("Erreur de téléchargement : " + err.message);
+            }
         }
-        .ql-container.ql-snow {
-            border: none !important;
-            font-size: 1.1rem;
-            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            flex-grow: 1;
-            color: #1f2937;
-        }
-        .ql-toolbar.ql-snow {
-            border: none !important;
-            border-bottom: 1px solid #e5e7eb !important;
-            background-color: #f9fafb;
-            border-radius: 6px 6px 0 0;
-            padding: 10px;
-        }
-        /* Style inspiré des templates pro pour les titres et blocs */
-        .ql-editor h1 {
-            font-size: 26px;
-            font-weight: 800;
-            color: #1e1b4b;
-            border-bottom: 2px solid #4f46e5;
-            padding-bottom: 8px;
-            margin-top: 20px;
-            margin-bottom: 15px;
-        }
-        .ql-editor h2 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #312e81;
-            margin-top: 25px;
-            margin-bottom: 10px;
-            background-color: #eef2ff;
-            padding: 6px 12px;
-            border-left: 4px solid #4f46e5;
-            border-radius: 0 4px 4px 0;
-        }
-        .ql-editor p {
-            margin-bottom: 12px;
-            text-align: justify;
-        }
-    </style>
+    </script>
+</body>
+</html>
