@@ -13,17 +13,16 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Initialisation du SDK standard
         const genAI = new GoogleGenerativeAI(apiKey);
         
-        // Configuration du modèle
-       const model = genAI.getGenerativeModel({ 
-            model: "gemini-pro",
-            systemInstruction: "You are an expert document drafter. You must ALWAYS output your response in clean, raw HTML format (using h1, h2, p, strong, em, ul, li). Never use markdown formatting and do not wrap the output in markdown code blocks or ```html."
-        });
+        // Configuration ultra-simple du modèle
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+        // On fusionne l'instruction système avec la demande de l'utilisateur
+        const finalPrompt = "You are an expert document drafter. You must ALWAYS output your response in clean, raw HTML format (using h1, h2, p, strong, em, ul, li). Never use markdown formatting or code blocks.\n\nDocument topic: " + prompt;
 
         // Génération du contenu
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(finalPrompt);
         const aiText = result.response.text();
         
         // Nettoyage du texte
