@@ -7,17 +7,17 @@ export default async function handler(req, res) {
     if (!apiKey) return res.status(500).json({ error: '🚨 CLÉ API INTROUVABLE DANS VERCEL.' });
 
     try {
-        // Définition des consignes de mise en page selon le style choisi
-        let styleInstruction = "";
-        if (style === 'academic') {
-            styleInstruction = "Style académique : Structure le document avec un titre principal, des sections claires (1. Introduction, 2. Développement, 3. Conclusion), un ton formel et des listes à puces bien organisées.";
-        } else if (style === 'creative') {
-            styleInstruction = "Style moderne et épuré : Utilise un ton accrocheur, des sous-titres dynamiques et une mise en page aérée.";
+        let templateInstructions = "";
+        
+        if (style === 'corporate') {
+            templateInstructions = "Génère un document d'entreprise formel. Commence OBLIGATOIREMENT par une page de garde HTML structurée de cette manière : un titre principal en h1, un sous-titre en p, puis les métadonnées (Auteur: Wilfried KOFFI, Date: Septembre 2026) encadrées proprement, suivies d'un saut de page ou d'une ligne de séparation, puis les sections du rapport (1. Introduction, 2. Développement, 3. Conclusion).";
+        } else if (style === 'academic') {
+            templateInstructions = "Génère un document académique rigoureux. Commence OBLIGATOIREMENT par une page de garde académique structurée (Titre du mémoire/projet, Nom de l'auteur: Wilfried KOFFI, Institution, Date), puis structure le contenu avec des sections académiques détaillées.";
         } else {
-            styleInstruction = "Style professionnel et formel : Utilise une mise en page d'entreprise rigoureuse, un en-tête clair, des sections numérotées et un vocabulaire technique irréprochable.";
+            templateInstructions = "Génère une lettre ou un document moderne et percutant avec un en-tête soigné, un objet clair et des paragraphes bien aérés.";
         }
 
-        const finalPrompt = `You are an expert document drafter. ${styleInstruction} You must ALWAYS output your response in clean, raw HTML format using proper tags (h1, h2, p, strong, em, ul, li). Never use markdown formatting or code blocks.\n\nDocument topic: ${prompt}`;
+        const finalPrompt = `You are an expert document drafter. ${templateInstructions} You must ALWAYS output your response in clean, raw HTML format using proper tags (h1, h2, p, strong, em, ul, li). Never use markdown formatting or code blocks.\n\nDocument topic: ${prompt}`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
