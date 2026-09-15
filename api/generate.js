@@ -9,8 +9,8 @@ export default async function handler(req, res) {
     try {
         const finalPrompt = "You are an expert document drafter. You must ALWAYS output your response in clean, raw HTML format (using h1, h2, p, strong, em, ul, li). Never use markdown formatting or code blocks.\n\nDocument topic: " + prompt;
 
-        // On utilise l'un des modèles officiels présents dans votre liste de diagnostic !
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        // Utilisation du modèle exigé par Google
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
