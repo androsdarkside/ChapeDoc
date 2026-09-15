@@ -3,215 +3,298 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChapeDoc - Smart Templates & History</title>
+    <title>ChapeDoc - Ultimate AI Document Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Quill.js CSS & JS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    
+    <!-- Export / Import Word -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill-to-word@1.3.0/dist/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
 
     <style>
         .page-container { background: #e5e7eb; padding: 2rem; display: flex; justify-content: center; }
-        .paper-sheet { background: white; width: 100%; max-width: 850px; min-height: 900px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 3rem; }
-        .ql-container.ql-snow { border: none !important; font-size: 1.1rem; }
-        .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid #e5e7eb !important; background: #f9fafb; }
+        .paper-sheet { background: white; width: 100%; max-width: 850px; min-height: 950px; box-shadow: 0 15px 30px rgba(0,0,0,0.1); padding: 3rem; border-top: 6px solid #4f46e5; }
+        .ql-container.ql-snow { border: none !important; font-size: 1.1rem; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid #e5e7eb !important; background: #f9fafb; border-radius: 6px 6px 0 0; }
+        .template-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+        .template-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
         .ai-loading { animation: pulse 1.5s infinite; opacity: 0.7; pointer-events: none; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col font-sans text-gray-800">
 
-    <header class="bg-indigo-600 text-white shadow-md py-4 px-8 flex justify-between items-center">
-        <h1 class="text-2xl font-black flex items-center space-x-2">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>ChapeDoc IA</span>
+    <!-- En-tête -->
+    <header class="bg-white border-b border-gray-200 shadow-sm py-4 px-8 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-2xl font-black text-indigo-600 flex items-center space-x-2 cursor-pointer" onclick="showGallery()">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>ChapeDoc</span>
         </h1>
-        <!-- Bouton pour ouvrir l'historique -->
-        <button onclick="toggleHistoryDrawer()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 shadow-sm">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <span>Mes Documents Récents</span>
-        </button>
+        <div class="flex items-center space-x-4">
+            <button onclick="document.getElementById('wordFileInput').click()" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition flex items-center space-x-2">
+                <i class="fa-solid fa-upload"></i><span>Importer .docx</span>
+            </button>
+            <input type="file" id="wordFileInput" accept=".docx" class="hidden" onchange="importWordDoc(event)">
+            
+            <button onclick="toggleHistoryDrawer()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 shadow-sm">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Mes Documents</span>
+            </button>
+        </div>
     </header>
 
-    <main class="max-w-5xl mx-auto px-4 py-8 w-full space-y-6 flex-grow relative">
+    <main class="w-full flex-grow relative">
         
-        <!-- TIROIR D'HISTORIQUE (Caché par défaut) -->
-        <div id="historyDrawer" class="hidden absolute right-4 top-0 z-50 w-80 bg-white border border-gray-200 rounded-xl shadow-xl p-4 space-y-4">
+        <!-- TIROIR D'HISTORIQUE -->
+        <div id="historyDrawer" class="hidden absolute right-6 top-4 z-50 w-80 bg-white border border-gray-200 rounded-xl shadow-2xl p-4 space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-history text-indigo-600"></i> Historique Local</h3>
+                <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-history text-indigo-600"></i> Historique des Documents</h3>
                 <button onclick="toggleHistoryDrawer()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="historyList" class="space-y-2 max-h-80 overflow-y-auto">
-                <!-- Les éléments de l'historique s'injecteront ici -->
-                <p class="text-xs text-gray-400 text-center py-4">Aucun document sauvegardé pour l'instant.</p>
+                <p class="text-xs text-gray-400 text-center py-4">Aucun document sauvegardé.</p>
             </div>
         </div>
 
-        <!-- MODE ARCHITECTE -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
-            <div class="flex items-center space-x-3 border-b border-gray-100 pb-3">
-                <i class="fa-solid fa-sitemap text-2xl text-indigo-600"></i>
-                <div>
-                    <h2 class="font-bold text-gray-800 text-lg">Mode Architecte</h2>
-                    <p class="text-xs text-gray-500">Validez le plan et ciblez votre audience avant la rédaction.</p>
-                </div>
+        <!-- VUE 1 : LA GALERIE DE MODÈLES -->
+        <div id="gallery-view" class="max-w-6xl mx-auto px-6 py-12 space-y-8">
+            <div class="text-center space-y-3 mb-12">
+                <h2 class="text-4xl font-black text-gray-900">Générateur de Documents Professionnels</h2>
+                <p class="text-gray-500 text-lg">Choisissez un template de style, structurez votre plan avec l'IA et exportez.</p>
             </div>
 
-            <!-- Étape 1 : Le Sujet -->
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">1. Quel est le sujet de votre document ?</label>
-                <div class="flex space-x-2">
-                    <input type="text" id="architectTopic" placeholder="Ex: Rapport technique sur l'installation d'un système solaire..." class="flex-grow px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="generateOutline()" id="btnOutline" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 rounded-lg transition shadow-sm whitespace-nowrap">
-                        Générer le Plan
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" onclick="openEditor('corporate')">
+                    <div class="h-44 bg-[url('https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
+                    <div class="p-5 space-y-2">
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Corporate</span>
+                        <h3 class="text-lg font-bold">Profil d'Entreprise</h3>
+                        <p class="text-sm text-gray-500">Rapports formels, présentations d'entreprise et structures de marché.</p>
+                    </div>
+                </div>
+
+                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" onclick="openEditor('academic')">
+                    <div class="h-44 bg-[url('https://images.unsplash.com/photo-1456755192534-7704c7416213?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
+                    <div class="p-5 space-y-2">
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Académique</span>
+                        <h3 class="text-lg font-bold">Mémoire & Stage</h3>
+                        <p class="text-sm text-gray-500">Rapports techniques, thèses et documentations de recherche.</p>
+                    </div>
+                </div>
+
+                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" onclick="openEditor('modern')">
+                    <div class="h-44 bg-[url('https://images.unsplash.com/photo-1586282391129-76a6df230234?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
+                    <div class="p-5 space-y-2">
+                        <span class="text-xs font-bold text-pink-600 bg-pink-50 px-2 py-1 rounded">Moderne</span>
+                        <h3 class="text-lg font-bold">Document / Lettre</h3>
+                        <p class="text-sm text-gray-500">Correspondances professionnelles et notes de synthèse épurées.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VUE 2 : L'ÉDITEUR & WORKSPACE IA (Caché par défaut) -->
+        <div id="editor-view" class="hidden max-w-5xl mx-auto px-4 py-8 space-y-6">
+            
+            <button onclick="showGallery()" class="text-sm font-medium text-gray-500 hover:text-gray-800 flex items-center space-x-2">
+                <i class="fa-solid fa-arrow-left"></i><span>Retour aux modèles</span>
+            </button>
+
+            <!-- MODE ARCHITECTE -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+                <div class="flex items-center space-x-3 border-b border-gray-100 pb-3">
+                    <i class="fa-solid fa-sitemap text-xl text-indigo-600"></i>
+                    <div>
+                        <h2 class="font-bold text-gray-800">Mode Architecte <span id="currentTemplateName" class="text-indigo-600 text-xs font-normal"></span></h2>
+                        <p class="text-xs text-gray-500">Générez un plan, validez-le, puis rédigez selon votre audience.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">1. Sujet du document :</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="architectTopic" placeholder="Ex: Étude de dimensionnement d'un système photovoltaïque..." class="flex-grow px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500">
+                        <button onclick="generateOutline()" id="btnOutline" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 rounded-lg transition shadow-sm whitespace-nowrap text-sm">
+                            Générer le Plan
+                        </button>
+                    </div>
+                </div>
+
+                <div id="outlineContainer" class="hidden space-y-4 pt-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">2. Ajustez le plan :</label>
+                        <textarea id="architectOutline" rows="4" class="w-full px-4 py-3 border border-indigo-300 bg-indigo-50 rounded-lg text-sm font-mono"></textarea>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1"><i class="fa-solid fa-users text-indigo-500"></i> Audience :</label>
+                            <select id="docAudience" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm">
+                                <option value="Jury académique et professeurs">🎓 Jury académique / Professeurs</option>
+                                <option value="Investisseurs et partenaires financiers">💰 Investisseurs / Partenaires</option>
+                                <option value="Professionnels et experts techniques">⚙️ Experts techniques / Ingénieurs</option>
+                                <option value="Clients et prospects">🤝 Clients / Prospects</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1"><i class="fa-solid fa-comment-dots text-indigo-500"></i> Ton :</label>
+                            <select id="docTone" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm">
+                                <option value="Formel, rigoureux et académique">Rigoureux & Formel</option>
+                                <option value="Analytique, direct et factuel">Analytique & Factuel</option>
+                                <option value="Enthousiaste et persuasif">Persuasif & Commercial</option>
+                                <option value="Pédagogique, clair et accessible">Pédagogique & Accessible</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button onclick="generateFullFromOutline()" id="btnFullDoc" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm flex items-center justify-center space-x-2 text-sm">
+                        <i class="fa-solid fa-file-signature"></i> 
+                        <span>3. Rédiger le document complet</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Étape 2 : Le Plan, le Style et l'Audience -->
-            <div id="outlineContainer" class="hidden space-y-4 pt-3">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">2. Modifiez le plan selon vos besoins :</label>
-                    <textarea id="architectOutline" rows="5" class="w-full px-4 py-3 border border-indigo-300 bg-indigo-50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 font-mono"></textarea>
+            <!-- BAGUETTE MAGIQUE -->
+            <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 flex flex-wrap gap-2 items-center justify-between">
+                <div class="flex items-center space-x-2 text-indigo-800 text-xs font-semibold">
+                    <i class="fa-solid fa-bolt text-yellow-500"></i>
+                    <span>Baguette Magique (surlignez du texte dans l'éditeur) :</span>
                 </div>
+                <div class="flex space-x-2" id="ai-action-buttons">
+                    <button onclick="modifySelection('reformuler')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium shadow-sm">Reformuler</button>
+                    <button onclick="modifySelection('rallonger')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium shadow-sm">Rallonger</button>
+                    <button onclick="modifySelection('pro')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium shadow-sm">Rendre Pro</button>
+                </div>
+            </div>
 
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1"><i class="fa-solid fa-users text-indigo-500"></i> Public cible :</label>
-                        <select id="docAudience" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-indigo-500">
-                            <option value="Jury académique et professeurs">🎓 Jury académique / Professeurs</option>
-                            <option value="Investisseurs et partenaires financiers">💰 Investisseurs / Partenaires</option>
-                            <option value="Professionnels et experts techniques">⚙️ Experts techniques / Ingénieurs</option>
-                            <option value="Clients et prospects">🤝 Clients / Prospects</option>
-                        </select>
+            <!-- ZONE ÉDITEUR A4 -->
+            <div class="page-container rounded-xl shadow-inner border border-gray-200">
+                <div class="paper-sheet flex flex-col">
+                    <div id="toolbar-container">
+                        <span class="ql-formats"><select class="ql-header"><option value="1">Titre 1</option><option value="2">Titre 2</option><option selected>Normal</option></select></span>
+                        <span class="ql-formats"><button class="ql-bold"></button><button class="ql-italic"></button></span>
+                        <span class="ql-formats"><button class="ql-list" value="ordered"></button><button class="ql-list" value="bullet"></button></span>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1"><i class="fa-solid fa-comment-dots text-indigo-500"></i> Ton :</label>
-                        <select id="docTone" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-indigo-500">
-                            <option value="Formel, rigoureux et académique">Rigoureux & Formel</option>
-                            <option value="Analytique, direct et factuel">Analytique & Factuel</option>
-                            <option value="Enthousiaste et persuasif">Persuasif & Commercial</option>
-                            <option value="Pédagogique, clair et accessible">Pédagogique & Accessible</option>
-                        </select>
-                    </div>
+                    <div id="editor-container" class="mt-4 flex-grow"><p>Votre document apparaîtra ici...</p></div>
                 </div>
-                
-                <button onclick="generateFullFromOutline()" id="btnFullDoc" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-lg transition shadow-sm flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-file-signature"></i> 
-                    <span>3. Rédiger le document complet</span>
-                </button>
+            </div>
+
+            <!-- ACTIONS DE FIN -->
+            <div class="flex justify-between items-center p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <button onclick="saveCurrentToHistory()" class="text-indigo-600 font-medium px-4 text-sm hover:underline"><i class="fa-solid fa-floppy-disk"></i> Sauvegarder</button>
+                <button onclick="downloadWord()" class="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-black transition text-sm"><i class="fa-solid fa-download"></i> Télécharger en .docx</button>
             </div>
         </div>
 
-        <!-- BAGUETTE MAGIQUE -->
-        <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 flex flex-wrap gap-2 items-center justify-between">
-            <div class="flex items-center space-x-2 text-indigo-800 text-sm font-semibold">
-                <i class="fa-solid fa-bolt text-yellow-500"></i>
-                <span>Baguette magique (surlignez du texte) :</span>
-            </div>
-            <div class="flex space-x-2" id="ai-action-buttons">
-                <button onclick="modifySelection('reformuler')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">Reformuler</button>
-                <button onclick="modifySelection('rallonger')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">Rallonger</button>
-                <button onclick="modifySelection('pro')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">Rendre Pro</button>
-            </div>
-        </div>
-
-        <!-- Éditeur A4 -->
-        <div class="page-container rounded-xl shadow-inner border border-gray-200">
-            <div class="paper-sheet flex flex-col">
-                <div id="toolbar-container">
-                    <span class="ql-formats"><select class="ql-header"><option value="1">Titre 1</option><option value="2">Titre 2</option><option selected>Normal</option></select></span>
-                    <span class="ql-formats"><button class="ql-bold"></button><button class="ql-italic"></button></span>
-                    <span class="ql-formats"><button class="ql-list" value="ordered"></button><button class="ql-list" value="bullet"></button></span>
-                </div>
-                <div id="editor-container" class="mt-4 flex-grow"><p>Votre document apparaîtra ici...</p></div>
-            </div>
-        </div>
-
-        <!-- Export et Sauvegarde manuelle -->
-        <div class="flex justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <button onclick="saveCurrentToHistory()" class="text-indigo-600 font-medium px-4 text-sm hover:underline"><i class="fa-solid fa-floppy-disk"></i> Sauvegarder dans l'historique</button>
-            <button onclick="downloadWord()" class="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-black transition"><i class="fa-solid fa-download"></i> Télécharger .docx</button>
-        </div>
     </main>
 
     <script>
         const quill = new Quill('#editor-container', { modules: { toolbar: '#toolbar-container' }, theme: 'snow' });
+        let activeTemplate = 'corporate';
 
-        // --- GESTION DE L'HISTORIQUE LOCAL (LocalStorage) ---
+        function openEditor(style) {
+            activeTemplate = style;
+            document.getElementById('currentTemplateName').innerText = "(" + style.toUpperCase() + ")";
+            document.getElementById('gallery-view').classList.add('hidden');
+            document.getElementById('editor-view').classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function showGallery() {
+            document.getElementById('editor-view').classList.add('hidden');
+            document.getElementById('gallery-view').classList.remove('hidden');
+        }
 
         function toggleHistoryDrawer() {
             const drawer = document.getElementById('historyDrawer');
             drawer.classList.toggle('hidden');
-            if (!drawer.classList.contains('hidden')) {
+            if (!drawer.classList.contains('hidden')) renderHistoryList();
+        }
+
+        function saveCurrentToHistory() {
+            const html = quill.root.innerHTML;
+            const text = quill.getText().trim();
+            if (!text) return alert("Éditeur vide !");
+            const title = text.substring(0, 35) + "...";
+            const date = new Date().toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            let history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
+            history.unshift({ title, html, date });
+            if (history.length > 10) history.pop();
+            localStorage.setItem('chapedoc_history', JSON.stringify(history));
+            alert("Sauvegardé !");
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
+            if (history.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">Aucun document.</p>`;
+                return;
+            }
+            container.innerHTML = '';
+            history.forEach((doc, idx) => {
+                const item = document.createElement('div');
+                item.className = "p-2.5 hover:bg-gray-50 rounded-lg border border-gray-100 cursor-pointer flex justify-between items-center transition";
+                item.innerHTML = `
+                    <div onclick="loadDoc(${idx})" class="overflow-hidden pr-2 flex-grow">
+                        <p class="text-xs font-bold text-gray-800 truncate">${doc.title}</p>
+                        <p class="text-[10px] text-gray-400">${doc.date}</p>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="renameDoc(event, ${idx})" class="text-gray-300 hover:text-indigo-600 text-xs p-1"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteDoc(event, ${idx})" class="text-gray-300 hover:text-red-500 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function loadDoc(idx) {
+            let history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
+            if (history[idx]) {
+                quill.root.innerHTML = history[idx].html;
+                toggleHistoryDrawer();
+                showGallery(); // Rebascule sur l'éditeur si besoin
+            }
+        }
+
+        function renameDoc(e, idx) {
+            e.stopPropagation();
+            let history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
+            let name = prompt("Nouveau nom :", history[idx].title);
+            if (name && name.trim()) {
+                history[idx].title = name.trim();
+                localStorage.setItem('chapedoc_history', JSON.stringify(history));
                 renderHistoryList();
             }
         }
 
-        function saveCurrentToHistory() {
-            const htmlContent = quill.root.innerHTML;
-            const textContent = quill.getText().trim();
-            if (!textContent) return alert("L'éditeur est vide !");
-
-            // Extraire un titre automatique (les 30 premiers caractères)
-            const title = textContent.substring(0, 35) + "...";
-            const date = new Date().toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-
+        function deleteDoc(e, idx) {
+            e.stopPropagation();
             let history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
-            
-            // Ajouter le nouveau document en haut de la liste
-            history.unshift({ title, html: htmlContent, date });
-            
-            // Garder maximum 10 documents
-            if (history.length > 10) history.pop();
-
-            localStorage.setItem('chapedoc_history', JSON.stringify(history));
-            alert("Document sauvegardé dans l'historique !");
-        }
-
-        function renderHistoryList() {
-            const listContainer = document.getElementById('historyList');
-            const history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
-
-            if (history.length === 0) {
-                listContainer.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">Aucun document sauvegardé.</p>`;
-                return;
-            }
-
-            listContainer.innerHTML = '';
-            history.forEach((doc, index) => {
-                const item = document.createElement('div');
-                item.className = "p-2.5 hover:bg-gray-50 rounded-lg border border-gray-100 cursor-pointer flex justify-between items-center transition";
-                item.innerHTML = `
-                    <div onclick="loadDocument(${index})" class="overflow-hidden pr-2">
-                        <p class="text-xs font-bold text-gray-800 truncate">${doc.title}</p>
-                        <p class="text-[10px] text-gray-400">${doc.date}</p>
-                    </div>
-                    <button onclick="deleteHistoryItem(event, ${index})" class="text-gray-300 hover:text-red-500 text-xs px-1"><i class="fa-solid fa-trash"></i></button>
-                `;
-                listContainer.appendChild(item);
-            });
-        }
-
-        function loadDocument(index) {
-            const history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
-            if (history[index]) {
-                quill.root.innerHTML = history[index].html;
-                toggleHistoryDrawer();
-            }
-        }
-
-        function deleteHistoryItem(event, index) {
-            event.stopPropagation();
-            let history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
-            history.splice(index, 1);
+            history.splice(idx, 1);
             localStorage.setItem('chapedoc_history', JSON.stringify(history));
             renderHistoryList();
         }
 
-        // --- FONCTIONS ARCHITECTE & MAGIQUE (Déjà en place) ---
+        function importWordDoc(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            openEditor('import');
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                mammoth.convertToHtml({ arrayBuffer: evt.target.result })
+                    .then(res => quill.clipboard.dangerouslyPasteHTML(res.value))
+                    .catch(err => alert("Erreur : " + err.message));
+            };
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
+        }
 
         async function generateOutline() {
             const topic = document.getElementById('architectTopic').value.trim();
@@ -228,7 +311,7 @@
                 if (!res.ok) throw new Error(data.error);
                 document.getElementById('architectOutline').value = data.text;
                 document.getElementById('outlineContainer').classList.remove('hidden');
-            } catch (err) { alert("Erreur : " + err.message); }
+            } catch (err) { alert(err.message); }
             finally { btn.innerText = "Générer le Plan"; btn.disabled = false; }
         }
 
@@ -239,47 +322,43 @@
             const tone = document.getElementById('docTone').value;
             const btn = document.getElementById('btnFullDoc');
             if (!outline) return alert("Plan vide !");
-
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rédaction experte...`;
-            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rédaction experte...`; btn.disabled = true;
             try {
                 const res = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        prompt: `Sujet : ${topic}\n\nPlan :\n${outline}`,
-                        actionType: 'full_from_plan',
-                        audience, tone
-                    })
+                    body: JSON.stringify({ prompt: `Sujet : ${topic}\n\nPlan :\n${outline}`, actionType: 'full_from_plan', audience, tone, style: activeTemplate })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
                 quill.clipboard.dangerouslyPasteHTML(data.text);
-                saveCurrentToHistory(); // Sauvegarde auto après génération complète !
-            } catch (err) { alert("Erreur : " + err.message); }
+                saveCurrentToHistory();
+            } catch (err) { alert(err.message); }
             finally { btn.innerHTML = `<i class="fa-solid fa-file-signature"></i> <span>3. Rédiger le document complet</span>`; btn.disabled = false; }
         }
 
         async function modifySelection(action) {
             const range = quill.getSelection();
             if (!range || range.length === 0) return alert("Sélectionnez du texte !");
-            const selectedText = quill.getText(range.index, range.length);
+            const text = quill.getText(range.index, range.length);
             try {
                 const res = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: selectedText, actionType: action })
+                    body: JSON.stringify({ prompt: text, actionType: action })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
                 quill.deleteText(range.index, range.length);
                 quill.clipboard.dangerouslyPasteHTML(range.index, data.text);
-            } catch (err) { alert("Erreur : " + err.message); }
+            } catch (err) { alert(err.message); }
         }
 
         async function downloadWord() {
-            const blob = await quillToWord.generateWord(quill.getContents(), { exportAs: 'blob' });
-            saveAs(blob, "ChapeDoc_Document.docx");
+            try {
+                const blob = await quillToWord.generateWord(quill.getContents(), { exportAs: 'blob' });
+                saveAs(blob, "ChapeDoc_Pro.docx");
+            } catch (err) { alert("Erreur d'export : " + err.message); }
         }
     </script>
 </body>
