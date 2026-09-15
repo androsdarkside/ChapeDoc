@@ -1,5 +1,8 @@
 {
+  "name": "chapedoc",
+  "version": "1.0.0",
+  "type": "module",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1"
+    "@google/generative-ai": "^0.1.1"
   }
 }
