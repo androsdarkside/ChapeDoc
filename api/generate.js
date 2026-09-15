@@ -28,7 +28,7 @@ export default async function handler(req, res) {
             console.error("Gemini API Error:", data);
             return res.status(500).json({ error: data.error?.message || 'Gemini API failed.' });
         }
-        
+        // Force Vercel Update
         const aiText = data.candidates[0].content.parts[0].text;
         const cleanText = aiText.replace(/^```html\n?/, '').replace(/\n?```$/, '');
 
