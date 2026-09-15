@@ -127,17 +127,26 @@
         // 3. Export the Editor Canvas to a Word Document
         async function downloadWord() {
             try {
-                // Get the raw Delta format from Quill
-                const delta = quill.getContents();
-                
-                // Use quill-to-word to convert it to a docx Blob
-                const docAsBlob = await quillToWord.generateWord(delta, { exportAs: 'blob' });
-                
-                // Download it!
-                saveAs(docAsBlob, "ChapeDoc_Export.docx");
-            } catch (error) {
-                alert("Error exporting document: " + error.message);
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompt })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                // This will now show the exact error from the backend!
+                throw new Error(data.error || "Backend failed to generate content.");
             }
+            
+            // Inject the real AI HTML into the editor
+            quill.clipboard.dangerouslyPasteHTML(data.text);
+        } catch (error) {
+            alert("Error: " + error.message);
+        } finally {
+            btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span> Generate</span>`;
+        }
         }
         // Save document text to browser storage every time they type
 quill.on('text-change', function() {
