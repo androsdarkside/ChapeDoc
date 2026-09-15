@@ -28,6 +28,15 @@ export default async function handler(req, res) {
                 // Génération classique d'un document complet (actionType: 'main')
                 finalPrompt = `Tu es un expert en rédaction de documents. Rédige un contenu détaillé et structuré sur ce sujet : "${prompt}". Tu dois OBLIGATOIREMENT renvoyer ta réponse en HTML propre (avec des balises h1, h2, p, ul, li). N'utilise JAMAIS de markdown ou de blocs de code.`;
                 break;
+                // NOUVEAU : Mode Architecte - Créer uniquement le plan
+            case 'plan':
+                finalPrompt = `Tu es un expert en structuration de documents. Ton rôle est d'analyser le sujet suivant et de proposer UNIQUEMENT un plan détaillé et logique (avec des titres I, II, III et des sous-titres A, B, C). Ne rédige AUCUN paragraphe de contenu. Renvoie le plan en texte brut clair (sans HTML et sans markdown).\n\nSujet : "${prompt}"`;
+                break;
+                
+            // NOUVEAU : Mode Architecte - Rédiger à partir du plan
+            case 'full_from_plan':
+                finalPrompt = `Tu es un expert en rédaction professionnelle. Rédige un document exhaustif, formel et complet en te basant EXACTEMENT sur les instructions et le plan fournis ci-dessous. Développe chaque section en profondeur avec des arguments et du contenu de qualité.\n\n${prompt}\n\nTu dois OBLIGATOIREMENT renvoyer ta réponse au format HTML brut (utilise <h1> pour le titre principal, <h2> pour les grandes parties du plan, <h3> pour les sous-parties, <p> pour le texte, et <ul>/<li> pour les listes). N'utilise JAMAIS de markdown ou de blocs de code.`;
+                break;
         }
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
