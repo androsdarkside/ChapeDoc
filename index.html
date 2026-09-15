@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChapeDoc - Assistant IA de Rédaction</title>
+    <title>ChapeDoc - Smart Templates & History</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -17,8 +17,6 @@
         .paper-sheet { background: white; width: 100%; max-width: 850px; min-height: 900px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 3rem; }
         .ql-container.ql-snow { border: none !important; font-size: 1.1rem; }
         .ql-toolbar.ql-snow { border: none !important; border-bottom: 1px solid #e5e7eb !important; background: #f9fafb; }
-        
-        /* Animation pour indiquer que l'IA réfléchit */
         .ai-loading { animation: pulse 1.5s infinite; opacity: 0.7; pointer-events: none; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
     </style>
@@ -30,17 +28,34 @@
             <i class="fa-solid fa-wand-magic-sparkles"></i>
             <span>ChapeDoc IA</span>
         </h1>
+        <!-- Bouton pour ouvrir l'historique -->
+        <button onclick="toggleHistoryDrawer()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 shadow-sm">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Mes Documents Récents</span>
+        </button>
     </header>
 
-    <main class="max-w-5xl mx-auto px-4 py-8 w-full space-y-6 flex-grow">
+    <main class="max-w-5xl mx-auto px-4 py-8 w-full space-y-6 flex-grow relative">
         
-        <!-- MODE ARCHITECTE : Génération en 2 étapes -->
+        <!-- TIROIR D'HISTORIQUE (Caché par défaut) -->
+        <div id="historyDrawer" class="hidden absolute right-4 top-0 z-50 w-80 bg-white border border-gray-200 rounded-xl shadow-xl p-4 space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-history text-indigo-600"></i> Historique Local</h3>
+                <button onclick="toggleHistoryDrawer()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="historyList" class="space-y-2 max-h-80 overflow-y-auto">
+                <!-- Les éléments de l'historique s'injecteront ici -->
+                <p class="text-xs text-gray-400 text-center py-4">Aucun document sauvegardé pour l'instant.</p>
+            </div>
+        </div>
+
+        <!-- MODE ARCHITECTE -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
             <div class="flex items-center space-x-3 border-b border-gray-100 pb-3">
                 <i class="fa-solid fa-sitemap text-2xl text-indigo-600"></i>
                 <div>
                     <h2 class="font-bold text-gray-800 text-lg">Mode Architecte</h2>
-                    <p class="text-xs text-gray-500">Validez le plan avant de laisser l'IA rédiger le document complet.</p>
+                    <p class="text-xs text-gray-500">Validez le plan et ciblez votre audience avant la rédaction.</p>
                 </div>
             </div>
 
@@ -55,29 +70,25 @@
                 </div>
             </div>
 
-            <!-- Étape 2 : Le Plan et le Style (Apparaît après l'étape 1) -->
+            <!-- Étape 2 : Le Plan, le Style et l'Audience -->
             <div id="outlineContainer" class="hidden space-y-4 pt-3">
-                
-                <!-- Zone du Plan -->
                 <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">2. Voici le plan proposé (modifiez-le à votre convenance) :</label>
-                    <textarea id="architectOutline" rows="6" class="w-full px-4 py-3 border border-indigo-300 bg-indigo-50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 font-mono"></textarea>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">2. Modifiez le plan selon vos besoins :</label>
+                    <textarea id="architectOutline" rows="5" class="w-full px-4 py-3 border border-indigo-300 bg-indigo-50 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 font-mono"></textarea>
                 </div>
 
-                <!-- NOUVEAU : Réglage du Ton et de l'Audience -->
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1"><i class="fa-solid fa-users text-indigo-500"></i> À qui s'adresse ce document ?</label>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1"><i class="fa-solid fa-users text-indigo-500"></i> Public cible :</label>
                         <select id="docAudience" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-indigo-500">
                             <option value="Jury académique et professeurs">🎓 Jury académique / Professeurs</option>
                             <option value="Investisseurs et partenaires financiers">💰 Investisseurs / Partenaires</option>
                             <option value="Professionnels et experts techniques">⚙️ Experts techniques / Ingénieurs</option>
                             <option value="Clients et prospects">🤝 Clients / Prospects</option>
-                            <option value="Grand public (débutants)">🌍 Grand public (Vulgarisation)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600 mb-1"><i class="fa-solid fa-comment-dots text-indigo-500"></i> Quel ton utiliser ?</label>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1"><i class="fa-solid fa-comment-dots text-indigo-500"></i> Ton :</label>
                         <select id="docTone" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-indigo-500">
                             <option value="Formel, rigoureux et académique">Rigoureux & Formel</option>
                             <option value="Analytique, direct et factuel">Analytique & Factuel</option>
@@ -89,128 +100,124 @@
                 
                 <button onclick="generateFullFromOutline()" id="btnFullDoc" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-lg transition shadow-sm flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-file-signature"></i> 
-                    <span>3. Rédiger le document complet avec ce style</span>
+                    <span>3. Rédiger le document complet</span>
                 </button>
             </div>
         </div>
 
-        <!-- LA BAGUETTE MAGIQUE (Actions contextuelles) -->
+        <!-- BAGUETTE MAGIQUE -->
         <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 flex flex-wrap gap-2 items-center justify-between">
             <div class="flex items-center space-x-2 text-indigo-800 text-sm font-semibold">
                 <i class="fa-solid fa-bolt text-yellow-500"></i>
-                <span>Sélectionnez du texte dans l'éditeur, puis :</span>
+                <span>Baguette magique (surlignez du texte) :</span>
             </div>
             <div class="flex space-x-2" id="ai-action-buttons">
-                <button onclick="modifySelection('reformuler')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">
-                    <i class="fa-solid fa-arrows-rotate"></i> Reformuler
-                </button>
-                <button onclick="modifySelection('rallonger')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">
-                    <i class="fa-solid fa-plus"></i> Rallonger
-                </button>
-                <button onclick="modifySelection('pro')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">
-                    <i class="fa-solid fa-briefcase"></i> Rendre Pro
-                </button>
-                <button onclick="modifySelection('resumer')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">
-                    <i class="fa-solid fa-compress"></i> Résumer
-                </button>
+                <button onclick="modifySelection('reformuler')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">Reformuler</button>
+                <button onclick="modifySelection('rallonger')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">Rallonger</button>
+                <button onclick="modifySelection('pro')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded text-sm font-medium transition shadow-sm">Rendre Pro</button>
             </div>
         </div>
 
         <!-- Éditeur A4 -->
         <div class="page-container rounded-xl shadow-inner border border-gray-200">
-            <div class="paper-sheet flex flex-col" id="paper-wrapper">
+            <div class="paper-sheet flex flex-col">
                 <div id="toolbar-container">
                     <span class="ql-formats"><select class="ql-header"><option value="1">Titre 1</option><option value="2">Titre 2</option><option selected>Normal</option></select></span>
                     <span class="ql-formats"><button class="ql-bold"></button><button class="ql-italic"></button></span>
                     <span class="ql-formats"><button class="ql-list" value="ordered"></button><button class="ql-list" value="bullet"></button></span>
                 </div>
-                <div id="editor-container" class="mt-4 flex-grow"><p>Commencez à écrire ou générez un texte...</p></div>
+                <div id="editor-container" class="mt-4 flex-grow"><p>Votre document apparaîtra ici...</p></div>
             </div>
         </div>
 
-        <!-- Export -->
+        <!-- Export et Sauvegarde manuelle -->
         <div class="flex justify-between p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <button onclick="quill.setContents([])" class="text-red-500 font-medium px-4 text-sm hover:underline">Vider l'éditeur</button>
-            <button onclick="downloadWord()" class="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-black transition"><i class="fa-solid fa-download"></i> Télécharger en .docx</button>
+            <button onclick="saveCurrentToHistory()" class="text-indigo-600 font-medium px-4 text-sm hover:underline"><i class="fa-solid fa-floppy-disk"></i> Sauvegarder dans l'historique</button>
+            <button onclick="downloadWord()" class="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-black transition"><i class="fa-solid fa-download"></i> Télécharger .docx</button>
         </div>
     </main>
 
     <script>
         const quill = new Quill('#editor-container', { modules: { toolbar: '#toolbar-container' }, theme: 'snow' });
 
-        // 1. Fonction pour la génération principale (créer de zéro)
-        async function generateMainContent() {
-            const prompt = document.getElementById('mainPrompt').value.trim();
-            const btn = document.getElementById('mainGenerateBtn');
-            if (!prompt) return alert("Veuillez donner un sujet !");
+        // --- GESTION DE L'HISTORIQUE LOCAL (LocalStorage) ---
 
-            btn.innerText = "Génération..."; btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: prompt, actionType: 'main' })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error);
-                
-                quill.clipboard.dangerouslyPasteHTML(data.text);
-            } catch (err) {
-                alert("Erreur : " + err.message);
-            } finally {
-                btn.innerText = "Générer"; btn.disabled = false;
+        function toggleHistoryDrawer() {
+            const drawer = document.getElementById('historyDrawer');
+            drawer.classList.toggle('hidden');
+            if (!drawer.classList.contains('hidden')) {
+                renderHistoryList();
             }
         }
 
-        // 2. Fonction pour la BAGUETTE MAGIQUE (Édition de sélection)
-        async function modifySelection(action) {
-            const range = quill.getSelection();
+        function saveCurrentToHistory() {
+            const htmlContent = quill.root.innerHTML;
+            const textContent = quill.getText().trim();
+            if (!textContent) return alert("L'éditeur est vide !");
+
+            // Extraire un titre automatique (les 30 premiers caractères)
+            const title = textContent.substring(0, 35) + "...";
+            const date = new Date().toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+            let history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
             
-            // Vérifier si du texte est sélectionné
-            if (!range || range.length === 0) {
-                alert("Veuillez d'abord surligner/sélectionner le texte que vous voulez modifier dans l'éditeur !");
+            // Ajouter le nouveau document en haut de la liste
+            history.unshift({ title, html: htmlContent, date });
+            
+            // Garder maximum 10 documents
+            if (history.length > 10) history.pop();
+
+            localStorage.setItem('chapedoc_history', JSON.stringify(history));
+            alert("Document sauvegardé dans l'historique !");
+        }
+
+        function renderHistoryList() {
+            const listContainer = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
+
+            if (history.length === 0) {
+                listContainer.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">Aucun document sauvegardé.</p>`;
                 return;
             }
 
-            const selectedText = quill.getText(range.index, range.length);
-            const buttonContainer = document.getElementById('ai-action-buttons');
-            
-            // Effet visuel pendant que l'IA réfléchit
-            buttonContainer.classList.add('ai-loading');
+            listContainer.innerHTML = '';
+            history.forEach((doc, index) => {
+                const item = document.createElement('div');
+                item.className = "p-2.5 hover:bg-gray-50 rounded-lg border border-gray-100 cursor-pointer flex justify-between items-center transition";
+                item.innerHTML = `
+                    <div onclick="loadDocument(${index})" class="overflow-hidden pr-2">
+                        <p class="text-xs font-bold text-gray-800 truncate">${doc.title}</p>
+                        <p class="text-[10px] text-gray-400">${doc.date}</p>
+                    </div>
+                    <button onclick="deleteHistoryItem(event, ${index})" class="text-gray-300 hover:text-red-500 text-xs px-1"><i class="fa-solid fa-trash"></i></button>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
 
-            try {
-                const res = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        prompt: selectedText, 
-                        actionType: action 
-                    })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error);
-                
-                // Supprimer l'ancien texte et insérer le nouveau généré par l'IA
-                quill.deleteText(range.index, range.length);
-                quill.clipboard.dangerouslyPasteHTML(range.index, data.text);
-                
-            } catch (err) {
-                alert("Erreur lors de la modification : " + err.message);
-            } finally {
-                buttonContainer.classList.remove('ai-loading');
+        function loadDocument(index) {
+            const history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
+            if (history[index]) {
+                quill.root.innerHTML = history[index].html;
+                toggleHistoryDrawer();
             }
         }
-// --- FONCTIONS DU MODE ARCHITECTE ---
+
+        function deleteHistoryItem(event, index) {
+            event.stopPropagation();
+            let history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
+            history.splice(index, 1);
+            localStorage.setItem('chapedoc_history', JSON.stringify(history));
+            renderHistoryList();
+        }
+
+        // --- FONCTIONS ARCHITECTE & MAGIQUE (Déjà en place) ---
 
         async function generateOutline() {
             const topic = document.getElementById('architectTopic').value.trim();
             const btn = document.getElementById('btnOutline');
-            if (!topic) return alert("Veuillez entrer un sujet pour générer le plan !");
-
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Réflexion...`; 
-            btn.disabled = true;
-
+            if (!topic) return alert("Entrez un sujet !");
+            btn.innerText = "Réflexion..."; btn.disabled = true;
             try {
                 const res = await fetch('/api/generate', {
                     method: 'POST',
@@ -219,58 +226,60 @@
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
-
-                // Affiche le plan dans la zone de texte et rend le conteneur visible
                 document.getElementById('architectOutline').value = data.text;
                 document.getElementById('outlineContainer').classList.remove('hidden');
-            } catch (err) {
-                alert("Erreur : " + err.message);
-            } finally {
-                btn.innerHTML = "Générer le Plan"; 
-                btn.disabled = false;
-            }
+            } catch (err) { alert("Erreur : " + err.message); }
+            finally { btn.innerText = "Générer le Plan"; btn.disabled = false; }
         }
 
-       async function generateFullFromOutline() {
+        async function generateFullFromOutline() {
             const outline = document.getElementById('architectOutline').value.trim();
             const topic = document.getElementById('architectTopic').value.trim();
-            
-            // On récupère le Ton et l'Audience
             const audience = document.getElementById('docAudience').value;
             const tone = document.getElementById('docTone').value;
-            
             const btn = document.getElementById('btnFullDoc');
+            if (!outline) return alert("Plan vide !");
 
-            if (!outline) return alert("Le plan est vide !");
-
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rédaction experte en cours...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rédaction experte...`;
             btn.disabled = true;
-
             try {
                 const res = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        prompt: `Sujet principal : ${topic}\n\nPlan validé à suivre strictement :\n${outline}`,
+                        prompt: `Sujet : ${topic}\n\nPlan :\n${outline}`,
                         actionType: 'full_from_plan',
-                        audience: audience,  // NOUVEAU
-                        tone: tone           // NOUVEAU
+                        audience, tone
                     })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
-
                 quill.clipboard.dangerouslyPasteHTML(data.text);
-            } catch (err) {
-                alert("Erreur : " + err.message);
-            } finally {
-                btn.innerHTML = `<i class="fa-solid fa-file-signature"></i> <span>3. Rédiger le document complet avec ce style</span>`;
-                btn.disabled = false;
-            }
+                saveCurrentToHistory(); // Sauvegarde auto après génération complète !
+            } catch (err) { alert("Erreur : " + err.message); }
+            finally { btn.innerHTML = `<i class="fa-solid fa-file-signature"></i> <span>3. Rédiger le document complet</span>`; btn.disabled = false; }
         }
+
+        async function modifySelection(action) {
+            const range = quill.getSelection();
+            if (!range || range.length === 0) return alert("Sélectionnez du texte !");
+            const selectedText = quill.getText(range.index, range.length);
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: selectedText, actionType: action })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                quill.deleteText(range.index, range.length);
+                quill.clipboard.dangerouslyPasteHTML(range.index, data.text);
+            } catch (err) { alert("Erreur : " + err.message); }
+        }
+
         async function downloadWord() {
             const blob = await quillToWord.generateWord(quill.getContents(), { exportAs: 'blob' });
-            saveAs(blob, "ChapeDoc_Intelligence.docx");
+            saveAs(blob, "ChapeDoc_Document.docx");
         }
     </script>
 </body>
