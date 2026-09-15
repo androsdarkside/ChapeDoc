@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChapeDoc - Smart Document Assistant</title>
+    <title>ChapeDoc - Templates & AI Adapter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -24,17 +24,38 @@
     </header>
 
     <main class="max-w-4xl mx-auto px-6 py-8 w-full flex flex-col space-y-6 flex-grow">
+        
+        <!-- Panneau de sélection du Template et saisie du texte brut -->
         <div class="bg-white p-6 rounded-xl shadow-sm border space-y-4">
-            <h2 class="text-lg font-bold text-gray-900">What should we write?</h2>
-            <div class="flex space-x-3">
-                <input type="text" id="aiPrompt" placeholder="Ex: Rédige un rapport de stage..." class="flex-grow px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <button onclick="generateWithAI()" id="generateBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">Generate</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- 1. Choix du Template -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">1. Choisissez un modèle (Template) :</label>
+                    <select id="docTemplate" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="corporate">🏢 Rapport d'Entreprise / Professionnel</option>
+                        <option value="academic">🎓 Mémoire / Rapport Académique</option>
+                        <option value="modern">⚡ Lettre de motivation / Document Moderne</option>
+                    </select>
+                </div>
             </div>
+
+            <!-- 2. Zone de texte brut à adapter -->
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">2. Collez votre texte en vrac ou vos notes :</label>
+                <textarea id="rawText" rows="4" placeholder="Collez ici tout votre texte, vos idées ou notes brutes..." class="w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+            </div>
+
+            <!-- 3. Bouton de génération -->
+            <button onclick="adaptTextToTemplate()" id="generateBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Adapter mon texte au template</span>
+            </button>
         </div>
 
+        <!-- Éditeur final -->
         <div class="bg-white rounded-xl shadow-sm border flex flex-col flex-grow">
             <div id="editor-container" class="h-96 text-base">
-                <p>Votre document apparaîtra ici...</p>
+                <p>Le texte mis en page selon le template apparaîtra ici...</p>
             </div>
             <div class="p-4 border-t bg-gray-50 flex justify-between rounded-b-xl">
                 <button onclick="quill.setContents([])" class="text-red-500 text-sm font-medium">Effacer</button>
@@ -44,31 +65,38 @@
     </main>
 
     <script>
-        const quill = new Quill('#editor-container', {
-            theme: 'snow'
-        });
+        const quill = new Quill('#editor-container', { theme: 'snow' });
 
-        async function generateWithAI() {
-            const prompt = document.getElementById('aiPrompt').value.trim();
+        async function adaptTextToTemplate() {
+            const template = document.getElementById('docTemplate').value;
+            const rawText = document.getElementById('rawText').value.trim();
             const btn = document.getElementById('generateBtn');
-            if (!prompt) return alert("Entrez un sujet !");
 
-            btn.innerText = "Réflexion...";
+            if (!rawText) {
+                alert("Veuillez coller du texte dans la zone prévue à cet effet !");
+                return;
+            }
+
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span> Adaptation en cours...</span>`;
             btn.disabled = true;
 
             try {
                 const res = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, style: 'corporate' })
+                    body: JSON.stringify({ 
+                        prompt: `Voici le texte brut fourni par l'utilisateur : "${rawText}"`, 
+                        style: template 
+                    })
                 });
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error);
+                
                 quill.clipboard.dangerouslyPasteHTML(data.text);
             } catch (err) {
                 alert("Erreur : " + err.message);
             } finally {
-                btn.innerText = "Generate";
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span> Adapter mon texte au template</span>`;
                 btn.disabled = false;
             }
         }
@@ -77,7 +105,7 @@
             try {
                 const delta = quill.getContents();
                 const blob = await quillToWord.generateWord(delta, { exportAs: 'blob' });
-                saveAs(blob, "ChapeDoc.docx");
+                saveAs(blob, "ChapeDoc_Template.docx");
             } catch (err) {
                 alert("Erreur de téléchargement : " + err.message);
             }
