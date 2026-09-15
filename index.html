@@ -3,50 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChapeDoc - Smart Document Assistant</title>
+    <title>ChapeDoc - Smart Document Templates</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Quill.js Editor Core and Theme -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <!-- Remplacement de quill-to-word par docx.js pour une mise en page Word avancée -->
-<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     
-    <!-- FileSaver and Quill-to-Word for downloading -->
+    <!-- FileSaver and Quill-to-Word -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill-to-word@1.3.0/dist/index.js"></script>
 
     <style>
-        /* Effet visuel "Feuille de papier A4" pour l'éditeur */
+        /* Style visuel "Feuille A4" haut de gamme */
         .page-container {
             background: #e5e7eb;
-            padding: 2rem 1rem;
+            padding: 2.5rem 1rem;
             display: flex;
             justify-content: center;
         }
         .paper-sheet {
             background: white;
             width: 100%;
-            max-width: 800px;
-            min-height: 600px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border-radius: 4px;
+            max-width: 850px;
+            min-height: 900px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
             display: flex;
             flex-direction: column;
+            padding: 2rem;
         }
-        /* Ajustement de Quill pour épouser la feuille */
         .ql-container.ql-snow {
             border: none !important;
-            font-size: 1.1rem;
-            font-family: ui-sans-serif, system-ui, sans-serif;
+            font-size: 1.05rem;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             flex-grow: 1;
         }
         .ql-toolbar.ql-snow {
             border: none !important;
             border-bottom: 1px solid #e5e7eb !important;
             background-color: #f9fafb;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
+            border-radius: 6px 6px 0 0;
+            padding: 10px;
+        }
+        /* Style de la page de garde intégrée par défaut */
+        .cover-page {
+            border-bottom: 3px double #4f46e5;
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
         }
     </style>
 </head>
@@ -55,53 +61,47 @@
     <header class="bg-indigo-600 text-white shadow-md">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-file-lines text-2xl"></i>
+                <i class="fa-solid fa-file-invoice text-2xl"></i>
                 <h1 class="text-2xl font-bold tracking-wide">ChapeDoc</h1>
             </div>
-            <span class="text-xs bg-indigo-500 px-3 py-1 rounded-full font-medium">Pro Word Generator</span>
+            <span class="text-xs bg-indigo-500 px-3 py-1 rounded-full font-medium">Pro Templates Suite</span>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 py-8 w-full flex flex-col space-y-6">
         
-        <!-- Panneau de contrôle et choix des modèles -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+        <!-- Panneau de sélection des Templates et IA -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-5">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div class="space-y-1">
-                    <h2 class="text-lg font-bold text-gray-900">What should we write?</h2>
-                    <p class="text-xs text-gray-500">Choisissez un modèle ou décrivez votre besoin en détail.</p>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">Générateur de Document Pro</h2>
+                    <p class="text-xs text-gray-500">Choisissez un template stylisé et laissez l'IA structurer votre document.</p>
                 </div>
                 
-                <!-- Sélecteur de style / template -->
+                <!-- Sélecteur de Template -->
                 <div class="flex items-center space-x-2 w-full md:w-auto">
-                    <label for="docStyle" class="text-xs font-semibold text-gray-600 whitespace-nowrap"><i class="fa-solid fa-paintbrush text-indigo-600"></i> Style :</label>
-                    <select id="docStyle" class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
-                        <option value="professional">💼 Professionnel & Formel</option>
-                        <option value="academic">🎓 Académique & Structuré</option>
-                        <option value="creative">🎨 Moderne & Épuré</option>
+                    <label for="docTemplate" class="text-xs font-semibold text-gray-600 whitespace-nowrap">
+                        <i class="fa-solid fa-layer-group text-indigo-600"></i> Template :
+                    </label>
+                    <select id="docTemplate" class="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2">
+                        <option value="corporate">🏢 Rapport d'Entreprise (Avec Page de Garde)</option>
+                        <option value="academic">🎓 Mémoire & Rapport Académique</option>
+                        <option value="modern">⚡ Lettre / Document Moderne</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Boutons de raccourcis rapides -->
-            <div class="flex flex-wrap gap-2 items-center pt-2 border-t border-gray-100">
-                <span class="text-xs font-semibold text-gray-400 mr-2">Modèles rapides :</span>
-                <button onclick="setPrompt('Rédige un rapport de stage professionnel avec introduction, problématique, développement et conclusion')" class="text-xs bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-700 font-medium px-3 py-1.5 rounded-lg transition border border-gray-200">Rapport de stage</button>
-                <button onclick="setPrompt('Rédige une lettre de motivation percutante pour un poste en entreprise')" class="text-xs bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-700 font-medium px-3 py-1.5 rounded-lg transition border border-gray-200">Lettre de motivation</button>
-                <button onclick="setPrompt('Rédige un compte-rendu de réunion professionnel structuré avec ordre du jour et plan d\'action')" class="text-xs bg-gray-100 hover:bg-indigo-50 hover:text-indigo-700 text-gray-700 font-medium px-3 py-1.5 rounded-lg transition border border-gray-200">Compte-rendu</button>
-            </div>
-
-            <!-- Barre de saisie du prompt -->
+            <!-- Barre de saisie -->
             <div class="flex space-x-3 pt-2">
-                <input type="text" id="aiPrompt" placeholder="Ex: Rédige un contrat de prestation de services informatiques..." class="flex-grow px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                <button onclick="generateWithAI()" id="generateBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg transition flex items-center space-x-2 shadow-sm">
+                <input type="text" id="aiPrompt" placeholder="Ex: Rapport de stage sur l'installation de systèmes solaires photovoltaïques..." class="flex-grow px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <button onclick="generateWithTemplate()" id="generateBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg transition flex items-center space-x-2 shadow-sm">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Generate</span>
+                    <span>Générer le Template</span>
                 </button>
             </div>
         </div>
 
-        <!-- Zone d'Édition Façon "Page Word / A4" -->
+        <!-- Zone d'Édition Style A4 -->
         <div class="page-container rounded-xl shadow-inner border border-gray-200">
             <div class="paper-sheet">
                 <!-- Barre d'outils Quill -->
@@ -117,7 +117,6 @@
                         <button class="ql-bold"></button>
                         <button class="ql-italic"></button>
                         <button class="ql-underline"></button>
-                        <button class="ql-strike"></button>
                     </span>
                     <span class="ql-formats">
                         <select class="ql-align"></select>
@@ -129,28 +128,34 @@
                     <span class="ql-formats">
                         <button class="ql-blockquote"></button>
                     </span>
-                    <span class="ql-formats">
-                        <button class="ql-clean"></button>
-                    </span>
                 </div>
                 
-                <!-- Zone de texte éditable -->
-                <div id="editor-container" class="p-6">
-                    <p>Votre document généré apparaîtra ici, prêt à être personnalisé...</p>
+                <!-- Éditeur de texte -->
+                <div id="editor-container" class="mt-4">
+                    <!-- Exemple de page de garde visuelle par défaut -->
+                    <div class="cover-page">
+                        <h1 style="color: #4f46e5; font-size: 28px; font-weight: bold; margin-bottom: 10px;">TITRE DU DOCUMENT</h1>
+                        <p style="color: #6b7280; font-size: 16px; margin-bottom: 30px;">Sous-titre ou description du projet</p>
+                        <hr style="border: none; border-top: 1px solid #e5e7eb; width: 50%; margin: 20px auto;">
+                        <p style="color: #374151; font-size: 14px;"><strong>Auteur :</strong> Wilfried KOFFI</p>
+                        <p style="color: #374151; font-size: 14px;"><strong>Date :</strong> Septembre 2026</p>
+                    </div>
+                    <h2>1. Introduction</h2>
+                    <p>Votre contenu généré par template s'affichera ici...</p>
                 </div>
             </div>
         </div>
 
-        <!-- Pied de page avec actions -->
+        <!-- Pied de page actions -->
         <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
             <button onclick="clearDraft()" class="text-red-500 hover:text-red-700 font-medium px-4 py-2 transition flex items-center space-x-2 text-sm">
                 <i class="fa-solid fa-trash-can"></i>
-                <span>Start Fresh</span>
+                <span>Effacer</span>
             </button>
             
             <button onclick="downloadWord()" class="bg-gray-900 hover:bg-black text-white font-medium px-6 py-2.5 rounded-lg transition flex items-center space-x-2 shadow-sm text-sm">
                 <i class="fa-solid fa-download"></i>
-                <span>Download as .docx</span>
+                <span>Télécharger en .docx</span>
             </button>
         </div>
     </main>
@@ -161,45 +166,28 @@
             theme: 'snow'
         });
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedDraft = localStorage.getItem('chapedoc_draft');
-            if (savedDraft) {
-                quill.setContents(JSON.parse(savedDraft));
-            }
-        });
-
-        quill.on('text-change', function() {
-            const content = quill.getContents();
-            localStorage.setItem('chapedoc_draft', JSON.stringify(content));
-        });
-
         function clearDraft() {
-            if(confirm("Voulez-vous vraiment effacer le document actuel ?")) {
+            if(confirm("Voulez-vous effacer le document ?")) {
                 quill.setContents([]); 
-                localStorage.removeItem('chapedoc_draft'); 
             }
         }
 
-        function setPrompt(text) {
-            document.getElementById('aiPrompt').value = text;
-        }
-
-        async function generateWithAI() {
+        async function generateWithTemplate() {
             const promptInput = document.getElementById('aiPrompt');
             const btn = document.getElementById('generateBtn');
-            const styleSelect = document.getElementById('docStyle');
+            const templateSelect = document.getElementById('docTemplate');
             
             if (!promptInput || !btn) return;
 
             const prompt = promptInput.value.trim();
             if (!prompt) {
-                alert("Veuillez écrire un sujet avant de cliquer sur Générer !");
+                alert("Veuillez entrer un sujet pour le document !");
                 return;
             }
 
-            const selectedStyle = styleSelect ? styleSelect.value : 'professional';
+            const selectedTemplate = templateSelect ? templateSelect.value : 'corporate';
 
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span> Réflexion...</span>`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span> Création du modèle...</span>`;
             btn.disabled = true;
             
             try {
@@ -208,14 +196,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         prompt: prompt,
-                        style: selectedStyle 
+                        style: selectedTemplate 
                     })
                 });
 
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.error || "Le serveur backend a échoué.");
+                    throw new Error(data.error || "Erreur de génération.");
                 }
                 
                 quill.clipboard.dangerouslyPasteHTML(data.text);
@@ -224,7 +212,7 @@
                 alert("Erreur : " + error.message);
                 console.error(error);
             } finally {
-                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span> Generate</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span> Générer le Template</span>`;
                 btn.disabled = false;
             }
         }
@@ -233,7 +221,7 @@
             try {
                 const delta = quill.getContents();
                 const docAsBlob = await quillToWord.generateWord(delta, { exportAs: 'blob' });
-                saveAs(docAsBlob, "ChapeDoc_Document.docx");
+                saveAs(docAsBlob, "ChapeDoc_Template.docx");
             } catch (error) {
                 alert("Erreur lors du téléchargement : " + error.message);
             }
