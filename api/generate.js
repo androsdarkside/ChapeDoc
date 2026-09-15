@@ -11,13 +11,10 @@ export default async function handler(req, res) {
     }
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                systemInstruction: {
-                    parts: [{ text: "You are an expert document drafter. You must ALWAYS output your response in clean, raw HTML format (using h1, h2, p, strong, em, ul, li). Never use markdown formatting and do not wrap the output in markdown code blocks or ```html." }]
-                },
                 contents: [{ parts: [{ text: prompt }] }] 
             })
         });
@@ -28,7 +25,7 @@ export default async function handler(req, res) {
             console.error("Gemini API Error:", data);
             return res.status(500).json({ error: data.error?.message || 'Gemini API failed.' });
         }
-        // Force Vercel Update
+        
         const aiText = data.candidates[0].content.parts[0].text;
         const cleanText = aiText.replace(/^```html\n?/, '').replace(/\n?```$/, '');
 
