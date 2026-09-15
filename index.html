@@ -88,113 +88,90 @@
     </main>
 
     <script>
-        // 1. Initialize the Quill Editor
+       // 1. Initialisation de l'éditeur Quill (Une seule fois !)
         const quill = new Quill('#editor-container', {
             modules: { toolbar: '#toolbar-container' },
             theme: 'snow'
         });
 
-        // 2. Mock AI Generation (Ready for Serverless Proxy)
-        async function generateWithAI() {
-            const prompt = document.getElementById('aiPrompt').value.trim();
-            const btn = document.getElementById('generateBtn');
-            if (!prompt) return;
-
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span> Thinking...</span>`;
-            
-            // NOTE: In production, this fetch will point to your Vercel/Netlify backend URL
-            // e.g., await fetch('/api/generate', { ... })
-            
-            // For now, we simulate the AI returning formatted HTML
-            setTimeout(() => {
-                const simulatedAiResponse = `
-                    <h1>Formal Resignation</h1>
-                    <p>Dear Manager,</p>
-                    <p>I am writing to formally notify you of my resignation from my position, effective two weeks from today.</p>
-                    <ul>
-                        <li><strong>Reason:</strong> Pursuing new opportunities.</li>
-                        <li><strong>Last Day:</strong> Friday, 28th.</li>
-                    </ul>
-                    <p>Thank you for the opportunity.</p>
-                `;
-                
-                // Inject the HTML into the editor
-                quill.clipboard.dangerouslyPasteHTML(simulatedAiResponse);
-                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span> Generate</span>`;
-            }, 1500);
-        }
-
-        // 3. Export the Editor Canvas to a Word Document
-        async function downloadWord() {
-            try {
-            const response = await fetch('/api/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: prompt })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                // This will now show the exact error from the backend!
-                throw new Error(data.error || "Backend failed to generate content.");
-            }
-            
-            // Inject the real AI HTML into the editor
-            quill.clipboard.dangerouslyPasteHTML(data.text);
-        } catch (error) {
-            alert("Error: " + error.message);
-        } finally {
-            btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span> Generate</span>`;
-        }
-        }
-        // Save document text to browser storage every time they type
-quill.on('text-change', function() {
-    const content = quill.getContents();
-    localStorage.setItem('chapedoc_draft', JSON.stringify(content));
-});
-
-// Restore document text when they open the page
-window.addEventListener('DOMContentLoaded', () => {
-    const savedDraft = localStorage.getItem('chapedoc_draft');
-    if (savedDraft) {
-        quill.setContents(JSON.parse(savedDraft));
-    }
-});
-        // 1. Initialize the Quill Editor
-        const quill = new Quill('#editor-container', {
-            modules: { toolbar: '#toolbar-container' },
-            theme: 'snow'
-        });
-
-        // ==========================================
-        // NEW: AUTO-SAVE FEATURE (Browser Storage)
-        // ==========================================
-        
-        // A. Load the saved draft when the page opens
+        // 2. Sauvegarde automatique (Auto-Save)
         window.addEventListener('DOMContentLoaded', () => {
             const savedDraft = localStorage.getItem('chapedoc_draft');
             if (savedDraft) {
-                // Parse the saved data and inject it into the editor
                 quill.setContents(JSON.parse(savedDraft));
             }
         });
 
-        // B. Save the draft every time the user types or the AI generates text
         quill.on('text-change', function() {
             const content = quill.getContents();
             localStorage.setItem('chapedoc_draft', JSON.stringify(content));
         });
 
-        // C. Optional: Add a function to clear the draft if they want to start fresh
         function clearDraft() {
-            if(confirm("Are you sure you want to clear your current document?")) {
-                quill.setContents([]); // Empties the editor
-                localStorage.removeItem('chapedoc_draft'); // Clears the browser memory
+            if(confirm("Voulez-vous vraiment effacer le document actuel ?")) {
+                quill.setContents([]); 
+                localStorage.removeItem('chapedoc_draft'); 
             }
         }
-        // ==========================================
-        
+
+        // 3. Appel à l'Intelligence Artificielle (API Vercel)
+        async function generateWithAI() {
+            const promptInput = document.getElementById('aiPrompt');
+            const btn = document.getElementById('generateBtn');
+            
+            if (!promptInput || !btn) return;
+
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+                alert("Veuillez écrire un sujet avant de cliquer sur Générer !");
+                return;
+            }
+
+            // Désactiver le bouton pendant le chargement
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span> Réflexion...</span>`;
+            btn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Le serveur backend a échoué.");
+                }
+                
+                // Injecter le texte dans l'éditeur
+                quill.clipboard.dangerouslyPasteHTML(data.text);
+                
+            } catch (error) {
+                alert("Erreur : " + error.message);
+                console.error(error);
+            } finally {
+                // Réactiver le bouton
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i><span> Generate</span>`;
+                btn.disabled = false;
+            }
+        }
+
+        // 4. Conversion et Téléchargement en Word (.docx)
+        async function downloadWord() {
+            try {
+                // Récupérer le contenu avec le formatage (gras, titres, etc.)
+                const delta = quill.getContents();
+                
+                // Convertir en document Word
+                const docAsBlob = await quillToWord.generateWord(delta, { exportAs: 'blob' });
+                
+                // Télécharger sur l'ordinateur
+                saveAs(docAsBlob, "ChapeDoc_Document.docx");
+            } catch (error) {
+                alert("Erreur lors du téléchargement : " + error.message);
+            }
+        }
     </script>
 </body>
 </html>
