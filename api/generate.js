@@ -1,7 +1,6 @@
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Only POST allowed' });
     
-    // NOUVEAU : On extrait 'audience' et 'tone'
     const { prompt, actionType, audience, tone } = req.body;
     const apiKey = process.env.GEMINI_API_KEY; 
 
@@ -12,29 +11,28 @@ export default async function handler(req, res) {
 
         switch (actionType) {
             case 'reformuler':
-                finalPrompt = `Reformule le texte suivant pour qu'il soit plus clair, fluide et naturel. Ne réponds QUE par le nouveau texte.\n\n"${prompt}"`;
+                finalPrompt = `Agis en tant qu'expert rédacteur. Reformule le texte suivant de manière magistrale pour qu'il soit d'une clarté absolue, fluide et percutante. Ne réponds QUE par le texte amélioré.\n\n"${prompt}"`;
                 break;
             case 'rallonger':
-                finalPrompt = `Développe l'idée du texte suivant en ajoutant des détails et des exemples. Ne réponds QUE par le nouveau texte.\n\n"${prompt}"`;
+                finalPrompt = `Agis en tant qu'expert rédacteur. Développe l'idée du texte suivant au maximum en argumentant en profondeur, en fournissant des exemples techniques précis et des explications exhaustives. Ne réponds QUE par le texte développé.\n\n"${prompt}"`;
                 break;
             case 'pro':
-                finalPrompt = `Réécris le texte suivant en utilisant un vocabulaire très professionnel et formel. Ne réponds QUE par le nouveau texte.\n\n"${prompt}"`;
+                finalPrompt = `Agis en tant qu'expert en communication d'entreprise. Réécris le texte suivant avec un vocabulaire ultra-professionnel, formel, prestigieux et percutant (niveau direction générale). Ne réponds QUE par le texte réécrit.\n\n"${prompt}"`;
                 break;
             case 'resumer':
-                finalPrompt = `Fais un résumé très concis du texte suivant. Ne réponds QUE par le nouveau texte.\n\n"${prompt}"`;
+                finalPrompt = `Fais un résumé analytique, dense et direct qui capture l'essence absolue du texte suivant en quelques phrases clés. Ne réponds QUE par le résumé.\n\n"${prompt}"`;
                 break;
             case 'plan':
-                finalPrompt = `Tu es un expert en structuration de documents. Ton rôle est d'analyser le sujet suivant et de proposer UNIQUEMENT un plan détaillé et logique (avec des titres I, II, III et des sous-titres A, B, C). Ne rédige AUCUN paragraphe de contenu. Renvoie le plan en texte brut clair.\n\nSujet : "${prompt}"`;
+                finalPrompt = `Agis en tant qu'ingénieur en conception de documents d'élite. Analyse le sujet suivant et élabore un plan extrêmement détaillé, rigoureux et structuré (divisé en grandes parties I, II, III et sous-parties A, B, C avec des sous-points précis). Ne rédige AUCUN paragraphe de contenu. Renvoie uniquement le plan en texte brut clair.\n\nSujet : "${prompt}"`;
                 break;
                 
-            // NOUVEAU : Application stricte du Ton et de l'Audience
             case 'full_from_plan':
-                finalPrompt = `Tu es un expert en rédaction professionnelle. Rédige un document exhaustif en te basant EXACTEMENT sur les instructions et le plan fournis ci-dessous.
-                
-CONSIGNES STRATÉGIQUES ET STYLISTIQUES :
-- Public cible visé : ${audience || 'Professionnels'}
-- Ton de rédaction : ${tone || 'Formel et rigoureux'}
-Tu DOIS impérativement adapter ton vocabulaire, tes arguments et ta manière de t'adresser au lecteur en fonction de ce public et de ce ton.
+                finalPrompt = `Agis en tant qu'expert consultant et rédacteur technique de haut niveau. Rédige un document extrêmement exhaustif, fouillé et d'une qualité professionnelle irréprochable en te basant rigoureusement sur le plan fourni.
+
+CONSIGNES DE PERFORMANCE MAXIMALE :
+- Ne fais aucune approximation. Développe chaque sous-partie en profondeur avec un maximum de détails techniques, d'analyses poussées et de rigueur rédactionnelle.
+- Public cible : ${audience || 'Professionnels et experts'}
+- Ton : ${tone || 'Formel, rigoureux et académique'}
 
 ${prompt}
 
@@ -42,7 +40,7 @@ Tu dois OBLIGATOIREMENT renvoyer ta réponse au format HTML brut (utilise <h1>, 
                 break;
                 
             default:
-                finalPrompt = `Tu es un expert en rédaction de documents. Rédige un contenu structuré sur : "${prompt}". Renvoie ta réponse en HTML brut.`;
+                finalPrompt = `Agis en tant qu'expert rédacteur. Rédige un contenu extrêmement détaillé et structuré sur : "${prompt}". Renvoie ta réponse en HTML brut.`;
                 break;
         }
 
@@ -50,7 +48,12 @@ Tu dois OBLIGATOIREMENT renvoyer ta réponse au format HTML brut (utilise <h1>, 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: finalPrompt }] }]
+                contents: [{ parts: [{ text: finalPrompt }] }],
+                // On pousse les paramètres de génération au maximum pour autoriser de très longs textes détaillés
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 8192, // Capacité maximale de tokens de sortie pour éviter toute coupure
+                }
             })
         });
 
