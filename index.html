@@ -197,6 +197,29 @@
         const quill = new Quill('#editor-container', { modules: { toolbar: '#toolbar-container' }, theme: 'snow' });
         let activeTemplate = 'corporate';
 
+        // Système de notification élégant (Toast) pour remplacer alert()
+        function showNotification(message, isError = true) {
+            const existing = document.getElementById('notification-toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.id = 'notification-toast';
+            toast.className = `fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl shadow-2xl text-sm font-medium flex items-center space-x-3 transition-all transform translate-y-0 ${
+                isError ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
+            }`;
+            
+            toast.innerHTML = `
+                <i class="fa-solid ${isError ? 'fa-triangle-exclamation' : 'fa-circle-check'} text-lg"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 6000);
+        }
+
         function openEditor(style) {
             activeTemplate = style;
             document.getElementById('currentTemplateName').innerText = "(" + style.toUpperCase() + ")";
@@ -219,14 +242,17 @@
         function saveCurrentToHistory() {
             const html = quill.root.innerHTML;
             const text = quill.getText().trim();
-            if (!text) return alert("Éditeur vide !");
+            if (!text) {
+                showNotification("L'éditeur est vide !", true);
+                return;
+            }
             const title = text.substring(0, 35) + "...";
             const date = new Date().toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' });
             let history = JSON.parse(localStorage.getItem('chapedoc_history') || '[]');
             history.unshift({ title, html, date });
             if (history.length > 10) history.pop();
             localStorage.setItem('chapedoc_history', JSON.stringify(history));
-            alert("Sauvegardé !");
+            showNotification("Document sauvegardé avec succès !", false);
         }
 
         function renderHistoryList() {
@@ -259,7 +285,7 @@
             if (history[idx]) {
                 quill.root.innerHTML = history[idx].html;
                 toggleHistoryDrawer();
-                showGallery(); // Rebascule sur l'éditeur si besoin
+                showGallery();
             }
         }
 
@@ -290,7 +316,7 @@
             reader.onload = function(evt) {
                 mammoth.convertToHtml({ arrayBuffer: evt.target.result })
                     .then(res => quill.clipboard.dangerouslyPasteHTML(res.value))
-                    .catch(err => alert("Erreur : " + err.message));
+                    .catch(err => showNotification("Erreur d'import : " + err.message, true));
             };
             reader.readAsArrayBuffer(file);
             e.target.value = '';
@@ -299,7 +325,10 @@
         async function generateOutline() {
             const topic = document.getElementById('architectTopic').value.trim();
             const btn = document.getElementById('btnOutline');
-            if (!topic) return alert("Entrez un sujet !");
+            if (!topic) {
+                showNotification("Veuillez entrer un sujet !", true);
+                return;
+            }
             btn.innerText = "Réflexion..."; btn.disabled = true;
             try {
                 const res = await fetch('/api/generate', {
@@ -311,8 +340,11 @@
                 if (!res.ok) throw new Error(data.error);
                 document.getElementById('architectOutline').value = data.text;
                 document.getElementById('outlineContainer').classList.remove('hidden');
-            } catch (err) { alert(err.message); }
-            finally { btn.innerText = "Générer le Plan"; btn.disabled = false; }
+            } catch (err) {
+                showNotification(err.message, true);
+            } finally {
+                btn.innerText = "Générer le Plan"; btn.disabled = false;
+            }
         }
 
         async function generateFullFromOutline() {
@@ -321,7 +353,10 @@
             const audience = document.getElementById('docAudience').value;
             const tone = document.getElementById('docTone').value;
             const btn = document.getElementById('btnFullDoc');
-            if (!outline) return alert("Plan vide !");
+            if (!outline) {
+                showNotification("Le plan est vide !", true);
+                return;
+            }
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rédaction experte...`; btn.disabled = true;
             try {
                 const res = await fetch('/api/generate', {
@@ -333,13 +368,19 @@
                 if (!res.ok) throw new Error(data.error);
                 quill.clipboard.dangerouslyPasteHTML(data.text);
                 saveCurrentToHistory();
-            } catch (err) { alert(err.message); }
-            finally { btn.innerHTML = `<i class="fa-solid fa-file-signature"></i> <span>3. Rédiger le document complet</span>`; btn.disabled = false; }
+            } catch (err) {
+                showNotification(err.message, true);
+            } finally {
+                btn.innerHTML = `<i class="fa-solid fa-file-signature"></i> <span>3. Rédiger le document complet</span>`; btn.disabled = false;
+            }
         }
 
         async function modifySelection(action) {
             const range = quill.getSelection();
-            if (!range || range.length === 0) return alert("Sélectionnez du texte !");
+            if (!range || range.length === 0) {
+                showNotification("Veuillez surligner du texte dans l'éditeur !", true);
+                return;
+            }
             const text = quill.getText(range.index, range.length);
             try {
                 const res = await fetch('/api/generate', {
@@ -351,14 +392,18 @@
                 if (!res.ok) throw new Error(data.error);
                 quill.deleteText(range.index, range.length);
                 quill.clipboard.dangerouslyPasteHTML(range.index, data.text);
-            } catch (err) { alert(err.message); }
+            } catch (err) {
+                showNotification(err.message, true);
+            }
         }
 
         async function downloadWord() {
             try {
                 const blob = await quillToWord.generateWord(quill.getContents(), { exportAs: 'blob' });
                 saveAs(blob, "ChapeDoc_Pro.docx");
-            } catch (err) { alert("Erreur d'export : " + err.message); }
+            } catch (err) {
+                showNotification("Erreur d'export : " + err.message, true);
+            }
         }
     </script>
 </body>
