@@ -132,6 +132,53 @@
                 alert("Error exporting document: " + error.message);
             }
         }
+        // Save document text to browser storage every time they type
+quill.on('text-change', function() {
+    const content = quill.getContents();
+    localStorage.setItem('chapedoc_draft', JSON.stringify(content));
+});
+
+// Restore document text when they open the page
+window.addEventListener('DOMContentLoaded', () => {
+    const savedDraft = localStorage.getItem('chapedoc_draft');
+    if (savedDraft) {
+        quill.setContents(JSON.parse(savedDraft));
+    }
+});
+        // 1. Initialize the Quill Editor
+        const quill = new Quill('#editor-container', {
+            modules: { toolbar: '#toolbar-container' },
+            theme: 'snow'
+        });
+
+        // ==========================================
+        // NEW: AUTO-SAVE FEATURE (Browser Storage)
+        // ==========================================
+        
+        // A. Load the saved draft when the page opens
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedDraft = localStorage.getItem('chapedoc_draft');
+            if (savedDraft) {
+                // Parse the saved data and inject it into the editor
+                quill.setContents(JSON.parse(savedDraft));
+            }
+        });
+
+        // B. Save the draft every time the user types or the AI generates text
+        quill.on('text-change', function() {
+            const content = quill.getContents();
+            localStorage.setItem('chapedoc_draft', JSON.stringify(content));
+        });
+
+        // C. Optional: Add a function to clear the draft if they want to start fresh
+        function clearDraft() {
+            if(confirm("Are you sure you want to clear your current document?")) {
+                quill.setContents([]); // Empties the editor
+                localStorage.removeItem('chapedoc_draft'); // Clears the browser memory
+            }
+        }
+        // ==========================================
+        
     </script>
 </body>
 </html>
