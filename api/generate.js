@@ -7,17 +7,14 @@ export default async function handler(req, res) {
     if (!apiKey) return res.status(500).json({ error: '🚨 CLÉ API INTROUVABLE DANS VERCEL.' });
 
     try {
-        let templateInstructions = "";
-        
+        let structureGuide = "";
         if (style === 'corporate') {
-            templateInstructions = "Rédige un rapport d'entreprise de niveau professionnel supérieur. Commence par une page de garde élégante (Titre percutant en h1, sous-titre, et blocs d'informations pour l'auteur et la date). Ensuite, structure le corps du texte avec des titres de niveau 2 (h2) pour chaque grande partie, des paragraphes argumentés et des listes à puces claires.";
-        } else if (style === 'academic') {
-            templateInstructions = "Rédige un document académique de type mémoire ou rapport de recherche. Intègre une page de garde formelle, une introduction structurée, des sections numérotées avec des balises h2, et une conclusion rigoureuse.";
+            structureGuide = "Transforme et adapte les notes fournies en un profil d'entreprise professionnel de type 'Company Profile'. Commence par une page de garde élégante (Titre de l'entreprise, sous-titre, date, auteur: Wilfried KOFFI). Ensuite, organise le texte en grandes sections claires avec des balises h1 et h2 (ex: Introduction, About the Company, Mission and Vision, Products and Services, Financial Performance, Contact Information), en utilisant des listes à puces (ul/li) pour les détails.";
         } else {
-            templateInstructions = "Rédige un document moderne, épuré et percutant, avec un en-tête stylisé et une mise en page très aérée.";
+            structureGuide = "Organise et réécris le texte brut fourni pour en faire un document formel et structuré, avec une introduction, un corps bien découpé avec des balises h1/h2, et une conclusion.";
         }
 
-        const finalPrompt = `You are an expert document designer and professional drafter. ${templateInstructions} You must ALWAYS output your response in clean, raw HTML format using proper tags (h1, h2, p, strong, em, ul, li). Never use markdown formatting or code blocks.\n\nDocument topic: ${prompt}`;
+        const finalPrompt = `You are an expert document formatter. ${structureGuide}\n\nVoici le texte brut et les notes de l'utilisateur à intégrer et structurer :\n"${prompt}"\n\nTu dois TOUJOURS renvoyer ta réponse au format HTML brut (utilisant h1, h2, p, strong, ul, li). N'utilise jamais de balises markdown ou de blocs de code.`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
