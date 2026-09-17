@@ -19,35 +19,93 @@
     <style>
         /* --- CORRECTION POUR MOBILE (RESPONSIVE) --- */
         @media screen and (max-width: 768px) {
-            /* On enlève les grosses marges autour de l'éditeur sur mobile */
             .editor-container, #editor-container, .ql-container {
                 width: 100% !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                box-shadow: none !important; /* Enlève l'effet d'ombre pour gagner de la place */
+                box-shadow: none !important; 
                 border-radius: 0 !important;
             }
-            
-            /* On réduit les marges intérieures du texte pour qu'il prenne toute la largeur */
             .ql-editor {
                 padding: 15px 10px !important;
-                font-size: 16px !important; /* Taille de police lisible sur mobile */
+                font-size: 16px !important; 
             }
-
-            /* On réorganise les boutons de la baguette magique s'ils prennent trop de place */
             .magic-wand-container {
                 display: flex;
                 flex-wrap: wrap;
                 gap: 5px;
                 justify-content: center;
             }
-            
-            /* Les boutons d'action s'adaptent à la largeur de l'écran */
             .magic-wand-container button {
                 flex: 1 1 auto;
                 font-size: 14px;
                 padding: 8px;
             }
+        }
+
+        /* --- STYLE DE LA BANNIÈRE D'ACCUEIL --- */
+        .welcome-banner {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            color: #3730a3;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            animation: fadeInDown 0.5s ease-out;
+        }
+        
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .welcome-banner h2 { 
+            margin-top: 0; 
+            font-size: 22px; 
+            font-weight: 900;
+        }
+        
+        .guide-steps {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap; 
+        }
+        
+        .step {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 220px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-align: left;
+        }
+        
+        .step span {
+            background: #4f46e5; 
+            color: white;
+            border-radius: 50%; 
+            padding: 4px 10px;
+            font-weight: bold; 
+            margin-right: 8px;
+        }
+        
+        .close-banner-btn {
+            background: #4f46e5; 
+            color: white;
+            border: none; 
+            padding: 10px 24px;
+            border-radius: 6px; 
+            cursor: pointer;
+            font-weight: bold; 
+            transition: background-color 0.3s;
+        }
+        
+        .close-banner-btn:hover { 
+            background: #3730a3; 
         }
     </style>
 </head>
@@ -86,14 +144,27 @@
         </div>
 
         <!-- VUE 1 : LA GALERIE DE MODÈLES -->
-        <div id="gallery-view" class="max-w-6xl mx-auto px-6 py-12 space-y-8">
-            <div class="text-center space-y-3 mb-12">
+        <div id="gallery-view" class="max-w-6xl mx-auto px-6 py-8 space-y-8">
+            
+            <!-- BANNIÈRE D'ACCUEIL -->
+            <div class="welcome-banner" id="welcomeBanner">
+                <h2>Bienvenue sur ChapeDoc 🚀</h2>
+                <p>Votre assistant de rédaction intelligente. Comment ça marche ?</p>
+                <div class="guide-steps">
+                    <div class="step"><span>1</span> <b>Créez un plan</b> avec le <i>Mode Architecte</i> ou tapez votre texte.</div>
+                    <div class="step"><span>2</span> <b>Surlignez le texte</b> pour utiliser la <i>Baguette Magique</i>.</div>
+                    <div class="step"><span>3</span> <b>Exportez en Word</b> d'un simple clic quand c'est parfait !</div>
+                </div>
+                <button onclick="document.getElementById('welcomeBanner').style.display='none'" class="close-banner-btn">J'ai compris !</button>
+            </div>
+
+            <div class="text-center space-y-3 mb-12 mt-8">
                 <h2 class="text-4xl font-black text-gray-900">Générateur de Documents Professionnels</h2>
                 <p class="text-gray-500 text-lg">Choisissez un template de style, structurez votre plan avec l'IA et exportez.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" onclick="openEditor('corporate')">
+                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('corporate')">
                     <div class="h-44 bg-[url('https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
                     <div class="p-5 space-y-2">
                         <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Corporate</span>
@@ -102,7 +173,7 @@
                     </div>
                 </div>
 
-                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" onclick="openEditor('academic')">
+                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('academic')">
                     <div class="h-44 bg-[url('https://images.unsplash.com/photo-1456755192534-7704c7416213?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
                     <div class="p-5 space-y-2">
                         <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Académique</span>
@@ -111,7 +182,7 @@
                     </div>
                 </div>
 
-                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" onclick="openEditor('modern')">
+                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('modern')">
                     <div class="h-44 bg-[url('https://images.unsplash.com/photo-1586282391129-76a6df230234?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
                     <div class="p-5 space-y-2">
                         <span class="text-xs font-bold text-pink-600 bg-pink-50 px-2 py-1 rounded">Moderne</span>
@@ -134,8 +205,8 @@
                 <div class="flex items-center space-x-3 border-b border-gray-100 pb-3">
                     <i class="fa-solid fa-sitemap text-xl text-indigo-600"></i>
                     <div>
-                        <h2 class="font-bold text-gray-800">Mode Architecte <span id="currentTemplateName" class="text-indigo-600 text-xs font-normal"></span></h2>
-                        <p class="text-xs text-gray-500">Générez un plan, validez-le, puis rédigez selon votre audience.</p>
+                        <h2 class="font-bold text-gray-800">Mode Architecte (Création de Plan Assistée) <span id="currentTemplateName" class="text-indigo-600 text-xs font-normal"></span></h2>
+                        <p class="text-xs text-gray-500">Générez un plan, validez-le, puis laissez l'IA rédiger la première version.</p>
                     </div>
                 </div>
 
@@ -189,39 +260,49 @@
                     <i class="fa-solid fa-bolt text-yellow-500"></i>
                     <span>Baguette Magique (surlignez du texte dans l'éditeur) :</span>
                 </div>
-                <div class="flex space-x-2" id="ai-action-buttons">
-                    <button onclick="modifySelection('reformuler')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium shadow-sm">Reformuler</button>
-                    <button onclick="modifySelection('rallonger')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium shadow-sm">Rallonger</button>
-                    <button onclick="modifySelection('pro')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium shadow-sm">Rendre Pro</button>
+                <div class="flex space-x-2 magic-wand-container" id="ai-action-buttons">
+                    <button onclick="modifySelection('reformuler')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium shadow-sm transition">Reformuler</button>
+                    <button onclick="modifySelection('rallonger')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium shadow-sm transition">Rallonger</button>
+                    <button onclick="modifySelection('pro')" class="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium shadow-sm transition">Rendre Pro</button>
                 </div>
             </div>
 
             <!-- ZONE ÉDITEUR A4 -->
-            <div class="page-container rounded-xl shadow-inner border border-gray-200">
-                <div class="paper-sheet flex flex-col">
-                    <div id="toolbar-container">
+            <div class="page-container rounded-xl shadow-inner border border-gray-200 bg-white p-2">
+                <div class="paper-sheet flex flex-col h-[60vh]">
+                    <div id="toolbar-container" class="border-b border-gray-200 bg-gray-50 rounded-t-lg">
                         <span class="ql-formats"><select class="ql-header"><option value="1">Titre 1</option><option value="2">Titre 2</option><option selected>Normal</option></select></span>
                         <span class="ql-formats"><button class="ql-bold"></button><button class="ql-italic"></button></span>
                         <span class="ql-formats"><button class="ql-list" value="ordered"></button><button class="ql-list" value="bullet"></button></span>
                     </div>
-                    <div id="editor-container" class="mt-4 flex-grow"><p>Votre document apparaîtra ici...</p></div>
+                    <!-- L'éditeur lui-même -->
+                    <div id="editor-container" class="flex-grow overflow-y-auto"></div>
                 </div>
             </div>
 
             <!-- ACTIONS DE FIN -->
             <div class="flex justify-between items-center p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                 <button onclick="saveCurrentToHistory()" class="text-indigo-600 font-medium px-4 text-sm hover:underline"><i class="fa-solid fa-floppy-disk"></i> Sauvegarder</button>
-                <button onclick="downloadWord()" class="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-black transition text-sm"><i class="fa-solid fa-download"></i> Télécharger en .docx</button>
+                <button onclick="downloadWord()" class="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-black transition text-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-download"></i> 
+                    <span>Exporter en Word (.docx)</span>
+                </button>
             </div>
         </div>
 
     </main>
 
     <script>
-        const quill = new Quill('#editor-container', { modules: { toolbar: '#toolbar-container' }, theme: 'snow' });
+        // Initialisation de Quill avec le placeholder mis à jour
+        const quill = new Quill('#editor-container', { 
+            modules: { toolbar: '#toolbar-container' }, 
+            theme: 'snow',
+            placeholder: 'Commencez à rédiger votre document ici, ou générez un plan plus haut...'
+        });
+        
         let activeTemplate = 'corporate';
 
-        // Système de notification élégant (Toast) pour remplacer alert()
+        // Système de notification élégant (Toast)
         function showNotification(message, isError = true) {
             const existing = document.getElementById('notification-toast');
             if (existing) existing.remove();
@@ -424,29 +505,18 @@
         async function downloadWord() {
             try {
                 const htmlContent = quill.root.innerHTML;
-                
-                // Entête et pied de page spécifiques pour que Microsoft Word interprète parfaitement le HTML
                 const preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Document</title></head><body>";
                 const postHtml = "</body></html>";
-                
                 const fullHtml = preHtml + htmlContent + postHtml;
-
-                // Création d'un fichier binaire natif (Blob)
                 const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
-                
-                // Déclenchement du téléchargement sans aucune bibliothèque externe
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = 'ChapeDoc_Pro.doc';
-                
                 document.body.appendChild(link);
                 link.click();
-                
-                // Nettoyage de la mémoire
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                
                 showNotification("Document téléchargé avec succès !", false);
             } catch (err) {
                 showNotification("Erreur d'export : " + err.message, true);
