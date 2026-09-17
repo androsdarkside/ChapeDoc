@@ -575,9 +575,47 @@
 
         async function downloadWord() {
             try {
-                const htmlContent = quill.root.innerHTML;
+                // 1. Cloner le contenu pour ne pas modifier l'éditeur visible
+                const editorClone = document.createElement('div');
+                editorClone.innerHTML = quill.root.innerHTML;
                 
-                // Récupération du sujet pour le titre de la page de garde
+                // 2. FORCER LES STYLES "INLINE" POUR QUE WORD LES LISE OBLIGATOIREMENT
+                // Style global (Police et texte)
+                editorClone.style.fontFamily = "Calibri, Arial, sans-serif";
+                editorClone.style.fontSize = "11pt";
+                editorClone.style.lineHeight = "1.5";
+                editorClone.style.color = "#000000";
+                
+                // Style des titres H1
+                const h1s = editorClone.querySelectorAll('h1');
+                h1s.forEach(h1 => {
+                    h1.style.fontSize = "18pt";
+                    h1.style.color = "#4f46e5"; // Bleu pro
+                    h1.style.borderBottom = "1px solid #4f46e5";
+                    h1.style.paddingBottom = "5px";
+                    h1.style.marginTop = "20px";
+                    h1.style.marginBottom = "10px";
+                    h1.style.fontWeight = "bold";
+                });
+
+                // Style des sous-titres H2
+                const h2s = editorClone.querySelectorAll('h2');
+                h2s.forEach(h2 => {
+                    h2.style.fontSize = "14pt";
+                    h2.style.color = "#1e293b";
+                    h2.style.marginTop = "15px";
+                    h2.style.marginBottom = "8px";
+                    h2.style.fontWeight = "bold";
+                });
+
+                // Style des paragraphes
+                const ps = editorClone.querySelectorAll('p');
+                ps.forEach(p => {
+                    p.style.marginBottom = "10px";
+                    p.style.textAlign = "justify"; // Texte justifié pro
+                });
+
+                // 3. PAGE DE GARDE DÉDIÉE
                 let docTitle = "Document Professionnel";
                 if (activeTemplate === 'modern') {
                     docTitle = document.getElementById('directTopic').value.trim() || docTitle;
@@ -586,74 +624,61 @@
                 }
                 const docDate = new Date().toLocaleDateString('fr-FR');
 
-                // 1. Création de la page de garde et du saut de page pour Word
                 const coverPage = `
-                    <div style="text-align: center; margin-top: 150px;">
-                        <p style="font-size: 16pt; color: #64748b;">Dossier / Projet</p>
-                        <h1 style="font-size: 32pt; color: #3730a3; border: none; margin-top: 20px;">${docTitle}</h1>
-                        <p style="font-size: 14pt; color: #64748b; margin-top: 50px;">Généré depuis ChapeDoc</p>
-                        <p style="font-size: 12pt; color: #94a3b8; margin-top: 10px;">Date : ${docDate}</p>
+                    <div style="text-align: center; margin-top: 150pt; margin-bottom: 200pt;">
+                        <p style="font-size: 14pt; color: #666666;">Document de Synthèse</p>
+                        <h1 style="font-size: 28pt; color: #1e3a8a; border: none; margin-top: 20pt; margin-bottom: 20pt;">${docTitle}</h1>
+                        <p style="font-size: 12pt; color: #666666; margin-top: 40pt;">Généré par ChapeDoc</p>
+                        <p style="font-size: 11pt; color: #888888;">Date : ${docDate}</p>
                     </div>
-                    <!-- Instruction spécifique pour forcer un saut de page dans Word -->
+                    <!-- CE CODE CASSE LA PAGE DANS WORD -->
                     <br clear="all" style="page-break-before:always; mso-break-type:section-break" />
                 `;
-                
-                // 2. En-tête HTML avec le style global
-                const preHtml = `
-                    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+
+                // 4. ASSEMBLAGE FINAL AVEC LES MÉTADONNÉES WORD OFFICIELLES
+                const htmlContent = `
+                    <html xmlns:v="urn:schemas-microsoft-com:vml"
+                          xmlns:o="urn:schemas-microsoft-com:office:office"
+                          xmlns:w="urn:schemas-microsoft-com:office:word"
+                          xmlns="http://www.w3.org/TR/REC-html40">
                     <head>
-                        <meta charset='utf-8'>
+                        <meta charset="utf-8">
                         <title>${docTitle}</title>
+                        <!-- Configuration spécifique Word pour les marges A4 (2.5cm = 1417 twips) -->
                         <style>
-                            @page {
-                                size: 21cm 29.7cm;
-                                mso-page-orientation: portrait;
-                                margin: 2.5cm;
+                            @page WordSection1 {
+                                size: 595.3pt 841.9pt; /* Format A4 */
+                                margin: 70.85pt 70.85pt 70.85pt 70.85pt; /* Marges 2.5cm */
+                                mso-header-margin: 35.4pt;
+                                mso-footer-margin: 35.4pt;
+                                mso-paper-source: 0;
                             }
-                            body {
-                                font-family: 'Calibri', 'Arial', sans-serif;
-                                font-size: 11pt;
-                                line-height: 1.6;
-                                color: #2d3748;
-                            }
-                            h1 {
-                                font-size: 18pt;
-                                color: #4f46e5;
-                                border-bottom: 2px solid #4f46e5;
-                                padding-bottom: 6px;
-                                margin-top: 24px;
-                                margin-bottom: 12px;
-                            }
-                            h2 {
-                                font-size: 14pt;
-                                color: #1e293b;
-                                margin-top: 18px;
-                                margin-bottom: 8px;
-                            }
-                            p { margin-bottom: 12px; text-align: justify; }
-                            ul, ol { margin-bottom: 12px; padding-left: 20px; }
-                            li { margin-bottom: 6px; }
+                            div.WordSection1 { page: WordSection1; }
                         </style>
                     </head>
                     <body>
+                        <div class="WordSection1">
+                            ${coverPage}
+                            ${editorClone.outerHTML}
+                        </div>
+                    </body>
+                    </html>
                 `;
-                const postHtml = "</body></html>";
-                
-                // 3. Assemblage final : Style + Page de Garde + Contenu de l'éditeur
-                const fullHtml = preHtml + coverPage + htmlContent + postHtml;
 
-                const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
+                // 5. GÉNÉRATION ET TÉLÉCHARGEMENT
+                const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'ChapeDoc_Professionnel.doc';
+                link.download = 'ChapeDoc_Pro.doc';
                 
                 document.body.appendChild(link);
                 link.click();
+                
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
                 
-                showNotification("Document téléchargé avec sa page de garde !", false);
+                showNotification("Document professionnel téléchargé !", false);
             } catch (err) {
                 showNotification("Erreur d'export : " + err.message, true);
             }
