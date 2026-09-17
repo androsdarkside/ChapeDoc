@@ -90,11 +90,11 @@ export default async function handler(req, res) {
             }
         }
 
+       
         // Si toutes les IA ont échoué
         if (!aiText) {
-            return res.status(500).json({ error: "Toutes nos intelligences artificielles sont actuellement saturées. Veuillez réessayer dans un instant." });
+            return res.status(500).json({ error: "Erreur technique détaillée : " + lastError });
         }
-
         // Nettoyage final du HTML
         const cleanText = aiText.replace(/^```html\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, '');
         return res.status(200).json({ text: cleanText });
