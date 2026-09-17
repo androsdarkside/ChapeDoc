@@ -25,10 +25,10 @@ export default async function handler(req, res) {
                 break;
         }
 
-        // Fonction 1 : Gemini (Modèle à jour : gemini-2.5-flash ou gemini-1.5-flash-latest)
+        // Fonction 1 : Gemini (Modèle standard officiel)
         async function callGemini() {
             if (!keys.gemini) throw new Error("Clé Gemini introuvable dans Vercel");
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${keys.gemini}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keys.gemini}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }] })
             });
@@ -37,13 +37,13 @@ export default async function handler(req, res) {
             return data.candidates[0].content.parts[0].text;
         }
 
-        // Fonction 2 : Groq (Modèle à jour et actif : llama-3.1-8b-instant)
+        // Fonction 2 : Groq (Modèle Llama 3.3 stable et ultra-puissant)
         async function callGroq() {
             if (!keys.groq) throw new Error("Clé Groq introuvable dans Vercel");
             const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${keys.groq}` },
                 body: JSON.stringify({ 
-                    model: "llama-3.1-8b-instant", // Modèle valide et ultra rapide chez Groq
+                    model: "llama-3.3-70b-versatile", 
                     messages: [{ role: "user", content: finalPrompt }] 
                 })
             });
