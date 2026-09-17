@@ -508,19 +508,73 @@
         async function downloadWord() {
             try {
                 const htmlContent = quill.root.innerHTML;
-                const preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Document</title></head><body>";
+                
+                // En-tête HTML enrichi avec des styles professionnels pour Word
+                const preHtml = `
+                    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                    <head>
+                        <meta charset='utf-8'>
+                        <title>Document ChapeDoc</title>
+                        <style>
+                            /* Mise en page type A4 avec marges professionnelles de 2.5cm */
+                            @page {
+                                size: 21cm 29.7cm;
+                                mso-page-orientation: portrait;
+                                margin: 2.5cm;
+                            }
+                            body {
+                                font-family: 'Calibri', 'Arial', sans-serif;
+                                font-size: 11pt;
+                                line-height: 1.6;
+                                color: #2d3748;
+                            }
+                            h1 {
+                                font-size: 18pt;
+                                color: #4f46e5;
+                                border-bottom: 2px solid #4f46e5;
+                                padding-bottom: 6px;
+                                margin-top: 24px;
+                                margin-bottom: 12px;
+                            }
+                            h2 {
+                                font-size: 14pt;
+                                color: #1e293b;
+                                margin-top: 18px;
+                                margin-bottom: 8px;
+                            }
+                            p {
+                                margin-bottom: 12px;
+                                text-align: justify;
+                            }
+                            ul, ol {
+                                margin-bottom: 12px;
+                                padding-left: 20px;
+                            }
+                            li {
+                                margin-bottom: 6px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                `;
                 const postHtml = "</body></html>";
+                
                 const fullHtml = preHtml + htmlContent + postHtml;
+
+                // Création et téléchargement du fichier Word propre
                 const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'ChapeDoc_Pro.doc';
+                link.download = 'ChapeDoc_Professionnel.doc';
+                
                 document.body.appendChild(link);
                 link.click();
+                
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                showNotification("Document téléchargé avec succès !", false);
+                
+                showNotification("Document professionnel téléchargé avec succès !", false);
             } catch (err) {
                 showNotification("Erreur d'export : " + err.message, true);
             }
