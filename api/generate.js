@@ -23,7 +23,7 @@ export default async function handler(req, res) {
                 break;
         }
 
-        // Utilisation du modèle Llama 3.3 officiel et actif chez Groq
+        // Appel à l'API Groq avec votre identifiant de modèle spécifique
         const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
             method: 'POST',
             headers: {
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${groqKey}`
             },
             body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
+                model: "openai/gpt-oss-120b", 
                 messages: [{ role: "user", content: finalPrompt }],
                 temperature: 0.7
             })
