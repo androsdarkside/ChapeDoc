@@ -202,13 +202,18 @@
             <button onclick="showGallery()" class="text-sm font-medium text-gray-500 hover:text-gray-800 flex items-center space-x-2">
                 <i class="fa-solid fa-arrow-left"></i><span>Retour aux choix</span>
             </button>
+            
+            <div class="flex items-center space-x-2 text-indigo-600 text-xs font-bold bg-indigo-50 px-3 py-1 rounded-full w-max">
+                <i class="fa-solid fa-tag"></i>
+                <span id="currentTemplateName"></span>
+            </div>
 
-            <!-- MODE ARCHITECTE -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+            <!-- MODE ARCHITECTE (Affiché pour Étudiant et Pro) -->
+            <div id="architect-section" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
                 <div class="flex items-center space-x-3 border-b border-gray-100 pb-3">
                     <i class="fa-solid fa-sitemap text-xl text-indigo-600"></i>
                     <div>
-                        <h2 class="font-bold text-gray-800">Mode Architecte (Création de Plan Assistée) <span id="currentTemplateName" class="text-indigo-600 text-xs font-normal"></span></h2>
+                        <h2 class="font-bold text-gray-800">Mode Architecte (Création de Plan Assistée)</h2>
                         <p class="text-xs text-gray-500">Générez un plan, validez-le, puis laissez l'IA rédiger la première version.</p>
                     </div>
                 </div>
@@ -257,6 +262,26 @@
                 </div>
             </div>
 
+            <!-- RÉDACTION DIRECTE (Affiché pour Lettre de motivation / Emploi) -->
+            <div id="direct-write-section" class="hidden bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4">
+                <div class="flex items-center space-x-3 border-b border-gray-100 pb-3">
+                    <i class="fa-solid fa-pen-nib text-xl text-pink-600"></i>
+                    <div>
+                        <h2 class="font-bold text-gray-800">Générateur de Lettre Simple</h2>
+                        <p class="text-xs text-gray-500">Rédigez directement une lettre fluide, simple et percutante sans plans compliqués.</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Pour quel poste, stage ou objectif ?</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="directTopic" placeholder="Ex: Candidature spontanée pour un poste de technicien..." class="flex-grow px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-pink-500">
+                        <button onclick="generateDirectLetter()" id="btnDirect" class="bg-pink-600 hover:bg-pink-700 text-white font-medium px-5 rounded-lg transition shadow-sm whitespace-nowrap text-sm">
+                            Rédiger la Lettre
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- BAGUETTE MAGIQUE -->
             <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 flex flex-wrap gap-2 items-center justify-between">
                 <div class="flex items-center space-x-2 text-indigo-800 text-xs font-semibold">
@@ -300,7 +325,7 @@
         const quill = new Quill('#editor-container', { 
             modules: { toolbar: '#toolbar-container' }, 
             theme: 'snow',
-            placeholder: 'Commencez à rédiger votre document ici, ou générez un plan plus haut...'
+            placeholder: 'Commencez à rédiger votre document ici, ou générez un texte avec l\'IA plus haut...'
         });
         
         let activeTemplate = 'corporate';
@@ -330,7 +355,21 @@
 
         function openEditor(style) {
             activeTemplate = style;
-            document.getElementById('currentTemplateName').innerText = "(" + style.toUpperCase() + ")";
+            document.getElementById('currentTemplateName').innerText = style.toUpperCase();
+            
+            const architectSection = document.getElementById('architect-section');
+            const directWriteSection = document.getElementById('direct-write-section');
+
+            // Si c'est une lettre de motivation (style 'modern'), on masque le plan d'architecte
+            if (style === 'modern') {
+                architectSection.classList.add('hidden');
+                directWriteSection.classList.remove('hidden');
+            } else {
+                // Pour les étudiants et le pro, on garde le Mode Architecte
+                architectSection.classList.remove('hidden');
+                directWriteSection.classList.add('hidden');
+            }
+
             document.getElementById('gallery-view').classList.add('hidden');
             document.getElementById('editor-view').classList.remove('hidden');
             window.scrollTo(0, 0);
@@ -483,6 +522,35 @@
             }
         }
 
+        async function generateDirectLetter() {
+            const topic = document.getElementById('directTopic').value.trim();
+            const btn = document.getElementById('btnDirect');
+            if (!topic) {
+                showNotification("Veuillez entrer le poste ou l'objectif !", true);
+                return;
+            }
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rédaction...`; btn.disabled = true;
+            try {
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        prompt: `Rédige une lettre de motivation ou de contact simple, fluide et professionnelle pour : ${topic}. Pas de grands titres avec des chiffres ou des listes à puces complexes, juste les paragraphes traditionnels d'une lettre (Madame, Monsieur, introduction, corps, conclusion, formule de politesse).`, 
+                        actionType: 'default' 
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                quill.clipboard.dangerouslyPasteHTML(data.text);
+                saveCurrentToHistory();
+                showNotification("Lettre rédigée avec succès !", false);
+            } catch (err) {
+                showNotification(err.message, true);
+            } finally {
+                btn.innerHTML = `Rédiger la Lettre`; btn.disabled = false;
+            }
+        }
+
         async function modifySelection(action) {
             const range = quill.getSelection();
             if (!range || range.length === 0) {
@@ -509,14 +577,34 @@
             try {
                 const htmlContent = quill.root.innerHTML;
                 
-                // En-tête HTML enrichi avec des styles professionnels pour Word
+                // Récupération du sujet pour le titre de la page de garde
+                let docTitle = "Document Professionnel";
+                if (activeTemplate === 'modern') {
+                    docTitle = document.getElementById('directTopic').value.trim() || docTitle;
+                } else {
+                    docTitle = document.getElementById('architectTopic').value.trim() || docTitle;
+                }
+                const docDate = new Date().toLocaleDateString('fr-FR');
+
+                // 1. Création de la page de garde et du saut de page pour Word
+                const coverPage = `
+                    <div style="text-align: center; margin-top: 150px;">
+                        <p style="font-size: 16pt; color: #64748b;">Dossier / Projet</p>
+                        <h1 style="font-size: 32pt; color: #3730a3; border: none; margin-top: 20px;">${docTitle}</h1>
+                        <p style="font-size: 14pt; color: #64748b; margin-top: 50px;">Généré depuis ChapeDoc</p>
+                        <p style="font-size: 12pt; color: #94a3b8; margin-top: 10px;">Date : ${docDate}</p>
+                    </div>
+                    <!-- Instruction spécifique pour forcer un saut de page dans Word -->
+                    <br clear="all" style="page-break-before:always; mso-break-type:section-break" />
+                `;
+                
+                // 2. En-tête HTML avec le style global
                 const preHtml = `
                     <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
                     <head>
                         <meta charset='utf-8'>
-                        <title>Document ChapeDoc</title>
+                        <title>${docTitle}</title>
                         <style>
-                            /* Mise en page type A4 avec marges professionnelles de 2.5cm */
                             @page {
                                 size: 21cm 29.7cm;
                                 mso-page-orientation: portrait;
@@ -542,26 +630,18 @@
                                 margin-top: 18px;
                                 margin-bottom: 8px;
                             }
-                            p {
-                                margin-bottom: 12px;
-                                text-align: justify;
-                            }
-                            ul, ol {
-                                margin-bottom: 12px;
-                                padding-left: 20px;
-                            }
-                            li {
-                                margin-bottom: 6px;
-                            }
+                            p { margin-bottom: 12px; text-align: justify; }
+                            ul, ol { margin-bottom: 12px; padding-left: 20px; }
+                            li { margin-bottom: 6px; }
                         </style>
                     </head>
                     <body>
                 `;
                 const postHtml = "</body></html>";
                 
-                const fullHtml = preHtml + htmlContent + postHtml;
+                // 3. Assemblage final : Style + Page de Garde + Contenu de l'éditeur
+                const fullHtml = preHtml + coverPage + htmlContent + postHtml;
 
-                // Création et téléchargement du fichier Word propre
                 const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -570,11 +650,10 @@
                 
                 document.body.appendChild(link);
                 link.click();
-                
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
                 
-                showNotification("Document professionnel téléchargé avec succès !", false);
+                showNotification("Document téléchargé avec sa page de garde !", false);
             } catch (err) {
                 showNotification("Erreur d'export : " + err.message, true);
             }
