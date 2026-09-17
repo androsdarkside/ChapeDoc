@@ -23,7 +23,7 @@ export default async function handler(req, res) {
                 break;
         }
 
-        // Appel direct à Groq avec le modèle Mixtral universel et accessible à 100%
+        // Utilisation du modèle Llama 3.3 officiel et actif chez Groq
         const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
             method: 'POST',
             headers: {
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${groqKey}`
             },
             body: JSON.stringify({
-                model: "mixtral-8x7b-32768",
+                model: "llama-3.3-70b-versatile",
                 messages: [{ role: "user", content: finalPrompt }],
                 temperature: 0.7
             })
