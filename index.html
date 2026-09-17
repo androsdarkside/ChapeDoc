@@ -164,35 +164,37 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('corporate')">
-                    <div class="h-44 bg-[url('https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
-                    <div class="p-5 space-y-2">
-                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Corporate</span>
-                        <h3 class="text-lg font-bold">Profil d'Entreprise</h3>
-                        <p class="text-sm text-gray-500">Rapports formels, présentations d'entreprise et structures de marché.</p>
-                    </div>
-                </div>
-
+                <!-- Option 1 -->
                 <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('academic')">
-                    <div class="h-44 bg-[url('https://images.unsplash.com/photo-1456755192534-7704c7416213?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
+                    <div class="h-44 bg-[url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
                     <div class="p-5 space-y-2">
-                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Académique</span>
-                        <h3 class="text-lg font-bold">Mémoire & Stage</h3>
-                        <p class="text-sm text-gray-500">Rapports techniques, thèses et documentations de recherche.</p>
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Étudiant</span>
+                        <h3 class="text-lg font-bold">Rapport de Stage / Mémoire</h3>
+                        <p class="text-sm text-gray-500">Idéal pour l'école, l'université ou un projet de fin d'études.</p>
                     </div>
                 </div>
 
+                <!-- Option 2 -->
                 <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('modern')">
-                    <div class="h-44 bg-[url('https://images.unsplash.com/photo-1586282391129-76a6df230234?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
+                    <div class="h-44 bg-[url('https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
                     <div class="p-5 space-y-2">
-                        <span class="text-xs font-bold text-pink-600 bg-pink-50 px-2 py-1 rounded">Moderne</span>
-                        <h3 class="text-lg font-bold">Document / Lettre</h3>
-                        <p class="text-sm text-gray-500">Correspondances professionnelles et notes de synthèse épurées.</p>
+                        <span class="text-xs font-bold text-pink-600 bg-pink-50 px-2 py-1 rounded">Emploi / Stage</span>
+                        <h3 class="text-lg font-bold">Lettre de Motivation</h3>
+                        <p class="text-sm text-gray-500">Pour postuler rapidement à un emploi, un stage ou une formation.</p>
+                    </div>
+                </div>
+
+                <!-- Option 3 -->
+                <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('corporate')">
+                    <div class="h-44 bg-[url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
+                    <div class="p-5 space-y-2">
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Pro / Business</span>
+                        <h3 class="text-lg font-bold">Projet ou Note Professionnelle</h3>
+                        <p class="text-sm text-gray-500">Pour présenter une idée, un business ou un rapport d'entreprise.</p>
                     </div>
                 </div>
             </div>
-        </div>
-
+            
         <!-- VUE 2 : L'ÉDITEUR & WORKSPACE IA (Caché par défaut) -->
         <div id="editor-view" class="hidden max-w-5xl mx-auto px-4 py-8 space-y-6">
             
