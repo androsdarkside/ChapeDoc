@@ -23,7 +23,7 @@ export default async function handler(req, res) {
                 break;
         }
 
-        // Appel direct à Groq (Modèle open-source ultra rapide et performant)
+        // Appel direct à Groq avec le modèle Mixtral universel et accessible à 100%
         const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
             method: 'POST',
             headers: {
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${groqKey}`
             },
             body: JSON.stringify({
-                model: "llama-3.1-8b-instant",
+                model: "mixtral-8x7b-32768",
                 messages: [{ role: "user", content: finalPrompt }],
                 temperature: 0.7
             })
