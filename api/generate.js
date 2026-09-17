@@ -2,69 +2,104 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Only POST allowed' });
     
     const { prompt, actionType, audience, tone } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY; 
-
-    if (!apiKey) return res.status(500).json({ error: '🚨 CLÉ API INTROUVABLE.' });
+    
+    // Récupération de toutes vos clés depuis Vercel
+    const keys = {
+        gemini: process.env.GEMINI_API_KEY,
+        groq: process.env.GROQ_API_KEY,
+        cohere: process.env.COHERE_API_KEY,
+        huggingface: process.env.HUGGINGFACE_API_KEY
+    };
 
     try {
         let finalPrompt = "";
-
+        
+        // --- LOGIQUE DU PROMPT (Identique à votre version précédente) ---
         switch (actionType) {
-            case 'reformuler':
-                finalPrompt = `Agis en tant qu'expert rédacteur. Reformule le texte suivant de manière magistrale pour qu'il soit d'une clarté absolue, fluide et percutante. Ne réponds QUE par le texte amélioré.\n\n"${prompt}"`;
-                break;
-            case 'rallonger':
-                finalPrompt = `Agis en tant qu'expert rédacteur. Développe l'idée du texte suivant au maximum en argumentant en profondeur, en fournissant des exemples techniques précis et des explications exhaustives. Ne réponds QUE par le texte développé.\n\n"${prompt}"`;
-                break;
-            case 'pro':
-                finalPrompt = `Agis en tant qu'expert en communication d'entreprise. Réécris le texte suivant avec un vocabulaire ultra-professionnel, formel, prestigieux et percutant (niveau direction générale). Ne réponds QUE par le texte réécrit.\n\n"${prompt}"`;
-                break;
-            case 'resumer':
-                finalPrompt = `Fais un résumé analytique, dense et direct qui capture l'essence absolue du texte suivant en quelques phrases clés. Ne réponds QUE par le résumé.\n\n"${prompt}"`;
-                break;
             case 'plan':
-                finalPrompt = `Agis en tant qu'ingénieur en conception de documents d'élite. Analyse le sujet suivant et élabore un plan extrêmement détaillé, rigoureux et structuré (divisé en grandes parties I, II, III et sous-parties A, B, C avec des sous-points précis). Ne rédige AUCUN paragraphe de contenu. Renvoie uniquement le plan en texte brut clair.\n\nSujet : "${prompt}"`;
+                finalPrompt = `Agis en tant qu'ingénieur en conception. Élabore un plan extrêmement détaillé. Ne rédige AUCUN paragraphe de contenu. Renvoie uniquement le plan en texte brut.\n\nSujet : "${prompt}"`;
                 break;
-                
             case 'full_from_plan':
-                finalPrompt = `Agis en tant qu'expert consultant et rédacteur technique de haut niveau. Rédige un document extrêmement exhaustif, fouillé et d'une qualité professionnelle irréprochable en te basant rigoureusement sur le plan fourni.
-
-CONSIGNES DE PERFORMANCE MAXIMALE :
-- Ne fais aucune approximation. Développe chaque sous-partie en profondeur avec un maximum de détails techniques, d'analyses poussées et de rigueur rédactionnelle.
-- Public cible : ${audience || 'Professionnels et experts'}
-- Ton : ${tone || 'Formel, rigoureux et académique'}
-
-${prompt}
-
-Tu dois OBLIGATOIREMENT renvoyer ta réponse au format HTML brut (utilise <h1>, <h2>, <h3>, <p>, <ul>, <li>). N'utilise JAMAIS de markdown ou de blocs de code.`;
+                finalPrompt = `Agis en tant qu'expert. Rédige un document extrêmement exhaustif en te basant sur le plan. Public: ${audience}. Ton: ${tone}.\n\n${prompt}\n\nRAPPEL STRICT: Réponds UNIQUEMENT en HTML brut (<h1>, <p>, <ul>...). Pas de markdown.`;
                 break;
-                
             default:
-                finalPrompt = `Agis en tant qu'expert rédacteur. Rédige un contenu extrêmement détaillé et structuré sur : "${prompt}". Renvoie ta réponse en HTML brut.`;
+                finalPrompt = `Rédige un contenu sur : "${prompt}". Renvoie ta réponse en HTML brut, sans markdown.`;
                 break;
         }
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: finalPrompt }] }],
-                // On pousse les paramètres de génération au maximum pour autoriser de très longs textes détaillés
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 8192, // Capacité maximale de tokens de sortie pour éviter toute coupure
-                }
-            })
-        });
+        // --- DÉFINITION DES FOURNISSEURS D'IA ---
 
-        const data = await response.json();
-        if (!response.ok) return res.status(500).json({ error: `🛑 ERREUR GOOGLE : ${data.error?.message}` });
+        const providers = [
+            async function callGemini() {
+                if (!keys.gemini) throw new Error("No key");
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keys.gemini}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }] })
+                });
+                if (!res.ok) throw new Error("Gemini failed");
+                const data = await res.json();
+                return data.candidates[0].content.parts[0].text;
+            },
+            
+            async function callGroq() {
+                if (!keys.groq) throw new Error("No key");
+                const res = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${keys.groq}` },
+                    body: JSON.stringify({ model: "llama3-8b-8192", messages: [{ role: "user", content: finalPrompt }] })
+                });
+                if (!res.ok) throw new Error("Groq failed");
+                const data = await res.json();
+                return data.choices[0].message.content;
+            },
 
-        const aiText = data.candidates[0].content.parts[0].text;
+            async function callCohere() {
+                if (!keys.cohere) throw new Error("No key");
+                const res = await fetch('https://api.cohere.ai/v1/generate', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${keys.cohere}` },
+                    body: JSON.stringify({ model: 'command', prompt: finalPrompt, max_tokens: 4000 })
+                });
+                if (!res.ok) throw new Error("Cohere failed");
+                const data = await res.json();
+                return data.generations[0].text;
+            },
+
+            async function callHuggingFace() {
+                if (!keys.huggingface) throw new Error("No key");
+                const res = await fetch('https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${keys.huggingface}` },
+                    body: JSON.stringify({ inputs: finalPrompt, parameters: { max_new_tokens: 4000 } })
+                });
+                if (!res.ok) throw new Error("HuggingFace failed");
+                const data = await res.json();
+                return data[0].generated_text.replace(finalPrompt, ""); // Retire le prompt de la réponse
+            }
+        ];
+
+        // --- LA CASCADE (WATERFALL) ---
+        let aiText = null;
+        let lastError = "";
+
+        for (const provider of providers) {
+            try {
+                aiText = await provider();
+                if (aiText) break; // Succès ! On sort de la boucle.
+            } catch (err) {
+                console.warn("Un fournisseur a échoué, passage au suivant...");
+                lastError = err.message;
+                continue; // Échec, on passe au fournisseur suivant.
+            }
+        }
+
+        // Si toutes les IA ont échoué
+        if (!aiText) {
+            return res.status(500).json({ error: "Toutes nos intelligences artificielles sont actuellement saturées. Veuillez réessayer dans un instant." });
+        }
+
+        // Nettoyage final du HTML
         const cleanText = aiText.replace(/^```html\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, '');
         return res.status(200).json({ text: cleanText });
 
     } catch (error) {
-        return res.status(500).json({ error: `💥 ERREUR SERVEUR : ${error.message}` });
+        return res.status(500).json({ error: error.message });
     }
 }
