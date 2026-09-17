@@ -399,11 +399,31 @@
 
         async function downloadWord() {
             try {
-                if (typeof quillToWord === 'undefined') {
-                    throw new Error("Le module d'exportation Word n'est pas encore totalement chargé. Veuillez patienter quelques secondes et réessayer.");
-                }
-                const blob = await quillToWord.generateWord(quill.getContents(), { exportAs: 'blob' });
-                saveAs(blob, "ChapeDoc_Pro.docx");
+                const htmlContent = quill.root.innerHTML;
+                
+                // Entête et pied de page spécifiques pour que Microsoft Word interprète parfaitement le HTML
+                const preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Document</title></head><body>";
+                const postHtml = "</body></html>";
+                
+                const fullHtml = preHtml + htmlContent + postHtml;
+
+                // Création d'un fichier binaire natif (Blob)
+                const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
+                
+                // Déclenchement du téléchargement sans aucune bibliothèque externe
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'ChapeDoc_Pro.doc';
+                
+                document.body.appendChild(link);
+                link.click();
+                
+                // Nettoyage de la mémoire
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                showNotification("Document téléchargé avec succès !", false);
             } catch (err) {
                 showNotification("Erreur d'export : " + err.message, true);
             }
