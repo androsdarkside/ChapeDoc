@@ -8,7 +8,7 @@ export default async function handler(req, res) {
         groq: process.env.GROQ_API_KEY
     };
 
-    let errorsTrace = []; // Pour garder une trace exacte de ce qui bloque
+    let errorsTrace = [];
 
     try {
         let finalPrompt = "";
@@ -25,10 +25,10 @@ export default async function handler(req, res) {
                 break;
         }
 
-        // Fonction 1 : Gemini
+        // Fonction 1 : Gemini (Modèle à jour : gemini-2.5-flash ou gemini-1.5-flash-latest)
         async function callGemini() {
-            if (!keys.gemini) throw new Error("Clé introuvable dans Vercel");
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keys.gemini}`, {
+            if (!keys.gemini) throw new Error("Clé Gemini introuvable dans Vercel");
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${keys.gemini}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }] })
             });
@@ -37,21 +37,23 @@ export default async function handler(req, res) {
             return data.candidates[0].content.parts[0].text;
         }
 
-        // Fonction 2 : Groq
+        // Fonction 2 : Groq (Modèle à jour et actif : llama-3.1-8b-instant)
         async function callGroq() {
-            if (!keys.groq) throw new Error("Clé introuvable dans Vercel");
+            if (!keys.groq) throw new Error("Clé Groq introuvable dans Vercel");
             const response = await fetch(`https://api.groq.com/openai/v1/chat/completions`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${keys.groq}` },
-                body: JSON.stringify({ model: "llama3-8b-8192", messages: [{ role: "user", content: finalPrompt }] })
+                body: JSON.stringify({ 
+                    model: "llama-3.1-8b-instant", // Modèle valide et ultra rapide chez Groq
+                    messages: [{ role: "user", content: finalPrompt }] 
+                })
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error?.message || "Erreur interne Groq");
             return data.choices[0].message.content;
         }
 
-        // --- TENTATIVES ---
+        // --- TENTATIVES EN CASCADE ---
         try {
-            // On tente Gemini en premier
             const aiText = await callGemini();
             const cleanText = aiText.replace(/^```html\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, '');
             return res.status(200).json({ text: cleanText });
@@ -60,14 +62,12 @@ export default async function handler(req, res) {
             errorsTrace.push(`Gemini: ${errGemini.message}`);
             
             try {
-                // Si Gemini échoue, on tente immédiatement Groq
                 const aiText = await callGroq();
                 const cleanText = aiText.replace(/^```html\n?/, '').replace(/^```\n?/, '').replace(/\n?```$/, '');
                 return res.status(200).json({ text: cleanText });
                 
             } catch (errGroq) {
                 errorsTrace.push(`Groq: ${errGroq.message}`);
-                // Si les deux échouent, on affiche exactement pourquoi pour que vous sachiez quoi corriger !
                 return res.status(500).json({ error: `Crash détaillé -> ${errorsTrace.join(' | ')}` });
             }
         }
