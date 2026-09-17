@@ -151,7 +151,7 @@
                 <h2>Bienvenue sur ChapeDoc 🚀</h2>
                 <p>Votre assistant de rédaction intelligente. Comment ça marche ?</p>
                 <div class="guide-steps">
-                    <div class="step"><span>1</span> <b>Créez un plan</b> avec le <i>Mode Architecte</i> ou tapez votre texte.</div>
+                    <div class="step"><span>1</span> <b>Choisissez un objectif</b> ci-dessous et entrez votre sujet.</div>
                     <div class="step"><span>2</span> <b>Surlignez le texte</b> pour utiliser la <i>Baguette Magique</i>.</div>
                     <div class="step"><span>3</span> <b>Exportez en Word</b> d'un simple clic quand c'est parfait !</div>
                 </div>
@@ -159,12 +159,12 @@
             </div>
 
             <div class="text-center space-y-3 mb-12 mt-8">
-                <h2 class="text-4xl font-black text-gray-900">Générateur de Documents Professionnels</h2>
-                <p class="text-gray-500 text-lg">Choisissez un template de style, structurez votre plan avec l'IA et exportez.</p>
+                <h2 class="text-4xl font-black text-gray-900">Que souhaitez-vous rédiger ?</h2>
+                <p class="text-gray-500 text-lg">Choisissez votre modèle, l'IA s'occupe de structurer et rédiger pour vous.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Option 1 -->
+                <!-- Option 1 : Étudiant -->
                 <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('academic')">
                     <div class="h-44 bg-[url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
                     <div class="p-5 space-y-2">
@@ -174,7 +174,7 @@
                     </div>
                 </div>
 
-                <!-- Option 2 -->
+                <!-- Option 2 : Emploi -->
                 <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('modern')">
                     <div class="h-44 bg-[url('https://images.unsplash.com/photo-1455390582262-044cdead277a?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
                     <div class="p-5 space-y-2">
@@ -184,7 +184,7 @@
                     </div>
                 </div>
 
-                <!-- Option 3 -->
+                <!-- Option 3 : Pro -->
                 <div class="template-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow" onclick="openEditor('corporate')">
                     <div class="h-44 bg-[url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=600&auto=format&fit=crop')] bg-cover bg-center border-b"></div>
                     <div class="p-5 space-y-2">
@@ -194,12 +194,13 @@
                     </div>
                 </div>
             </div>
-            
+        </div>
+
         <!-- VUE 2 : L'ÉDITEUR & WORKSPACE IA (Caché par défaut) -->
         <div id="editor-view" class="hidden max-w-5xl mx-auto px-4 py-8 space-y-6">
             
             <button onclick="showGallery()" class="text-sm font-medium text-gray-500 hover:text-gray-800 flex items-center space-x-2">
-                <i class="fa-solid fa-arrow-left"></i><span>Retour aux modèles</span>
+                <i class="fa-solid fa-arrow-left"></i><span>Retour aux choix</span>
             </button>
 
             <!-- MODE ARCHITECTE -->
@@ -295,7 +296,7 @@
     </main>
 
     <script>
-        // Initialisation de Quill avec le placeholder mis à jour
+        // Initialisation de Quill
         const quill = new Quill('#editor-container', { 
             modules: { toolbar: '#toolbar-container' }, 
             theme: 'snow',
